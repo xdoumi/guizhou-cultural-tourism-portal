@@ -662,6 +662,10 @@ svg {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.monitor-stat-grid {
+  margin-bottom: 16px;
+}
+
 .stat-card,
 .mini-stat {
   padding: 14px 16px;
@@ -2358,6 +2362,14 @@ svg {
   min-width: 1040px;
 }
 
+.monitor-task-table {
+  min-width: 1080px;
+}
+
+.monitor-call-table {
+  min-width: 1120px;
+}
+
 .share-call-table {
   min-width: 1220px;
 }
@@ -2772,6 +2784,86 @@ svg {
   background: var(--surface-muted);
   display: grid;
   gap: 14px;
+}
+
+.monitor-share-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  gap: 16px;
+  align-items: stretch;
+}
+
+.monitor-donut-panel {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-muted);
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 12px;
+}
+
+.monitor-donut-gauge {
+  width: 146px;
+  height: 146px;
+  border-radius: 50%;
+  background: conic-gradient(var(--primary) var(--rate), #d9e4df 0);
+  display: grid;
+  place-items: center;
+}
+
+.monitor-donut-gauge > div {
+  width: 102px;
+  height: 102px;
+  border-radius: 50%;
+  background: var(--surface);
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 4px;
+}
+
+.monitor-donut-gauge strong {
+  font-size: 28px;
+  line-height: 1;
+  color: var(--primary);
+}
+
+.monitor-donut-gauge span,
+.monitor-donut-legend {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.monitor-donut-legend {
+  display: grid;
+  gap: 6px;
+}
+
+.monitor-donut-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.monitor-donut-legend i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+.monitor-donut-legend .success {
+  background: var(--primary);
+}
+
+.monitor-donut-legend .failed {
+  background: #d9e4df;
+}
+
+.monitor-table-wrap {
+  margin-top: 4px;
 }
 
 .donut-chart-shell {
@@ -3383,7 +3475,8 @@ svg {
   }
 
   .service-overview-grid,
-  .inline-form-grid {
+  .inline-form-grid,
+  .monitor-share-layout {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -3408,6 +3501,10 @@ svg {
   }
 
   .map-analytics {
+    grid-template-columns: 1fr;
+  }
+
+  .monitor-share-layout {
     grid-template-columns: 1fr;
   }
 

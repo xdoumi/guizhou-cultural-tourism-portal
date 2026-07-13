@@ -44,6 +44,7 @@ const navigation = [
 const viewParentMap = {
   "dashboard-todos": "dashboard",
   "dashboard-warnings": "dashboard",
+  "dashboard-monitor": "dashboard",
   "resource-detail": "resources",
   "asset-detail": "assets",
   "metric-detail": "assets",
@@ -3277,6 +3278,72 @@ const dashboardFoundationCards = [
   },
 ];
 
+const dashboardMonitorTaskSummary = computed(() => {
+  const successCount = dataAccessCatalog.reduce((sum, item) => sum + item.dailyRecords.filter((record) => record.taskStatus === "成功").length, 0);
+  const runningCount = dataAccessCatalog.reduce((sum, item) => sum + item.dailyRecords.filter((record) => record.taskStatus === "进行中").length, 0);
+  const totalTasks = successCount + runningCount + 1286;
+  const recentTotal = successCount + runningCount;
+  const recentFailed = 2;
+  const recentSuccess = Math.max(0, recentTotal - recentFailed);
+  const successRate = recentTotal ? ((recentSuccess / recentTotal) * 100).toFixed(1) : "0.0";
+
+  return {
+    totalTasks,
+    recentSuccess,
+    recentFailed,
+    successRate,
+  };
+});
+
+const dashboardMonitorTaskCards = computed(() => [
+  {
+    label: "累计采集任务",
+    value: `${dashboardMonitorTaskSummary.value.totalTasks.toLocaleString("zh-CN")}次`,
+    meta: "平台累计执行",
+  },
+  {
+    label: "近24小时成功",
+    value: `${dashboardMonitorTaskSummary.value.recentSuccess}次`,
+    meta: "采集任务成功次数",
+  },
+  {
+    label: "近24小时失败",
+    value: `${dashboardMonitorTaskSummary.value.recentFailed}次`,
+    meta: "采集任务失败次数",
+  },
+  {
+    label: "近24小时成功率",
+    value: `${dashboardMonitorTaskSummary.value.successRate}%`,
+    meta: "成功次数 / 总次数",
+  },
+]);
+
+const dashboardTodayTaskDetails = computed(() =>
+  dataAccessCatalog.slice(0, 8).map((item, index) => {
+    const record = item.dailyRecords[0];
+    return {
+      taskName: `${item.name}采集任务`,
+      status: index === 5 ? "失败" : record.taskStatus,
+      startTime: record.taskStartTime,
+      endTime: index === 5 ? "2026-07-11 03:18" : record.taskEndTime,
+      duration: record.taskEndTime === "执行中" ? "执行中" : index === 5 ? "8分钟" : `${24 + index * 3}分钟`,
+    };
+  }),
+);
+
+const dashboardSharedCallSuccess = computed(() => sharedDataCallCatalog.value.filter((item) => item.callStatus === "成功").length);
+const dashboardSharedCallFailed = computed(() => sharedDataCallCatalog.value.filter((item) => item.callStatus === "失败").length);
+const dashboardSharedCallTotal = computed(() => sharedDataCallCatalog.value.length);
+const dashboardSharedCallSuccessRate = computed(() =>
+  dashboardSharedCallTotal.value ? Math.round((dashboardSharedCallSuccess.value / dashboardSharedCallTotal.value) * 100) : 0,
+);
+const dashboardShareMonitorCards = computed(() => [
+  { label: "已发布服务接口", value: `${serviceCatalog.length}个`, meta: "服务总数统计" },
+  { label: "累计服务调用", value: "18,642次", meta: "服务调用统计" },
+  { label: "今日调用成功", value: `${dashboardSharedCallSuccess.value}次`, meta: "调用状态监控" },
+  { label: "今日调用失败", value: `${dashboardSharedCallFailed.value}次`, meta: "失败调用记录" },
+]);
+
 const dashboardTodoItems = [
   {
     title: "共享申请待审核",
@@ -3499,6 +3566,12 @@ const viewMetaMap = {
     description: "集中查看客流、停车、气象等风险预警与处置提示，支撑快速研判与响应。",
     tag: "驾驶舱",
   },
+  "dashboard-monitor": {
+    label: "运行监控",
+    eyebrow: "平台运行监控",
+    description: "汇总资源地图、采集任务执行、数据服务发布和调用状态，支撑平台运行值守。",
+    tag: "驾驶舱",
+  },
   resources: {
     eyebrow: "资源统一管理",
     description: "统一查看景区、街区、度假区、文化场馆、酒店民宿等资源目录及其关联数据。",
@@ -3649,6 +3722,7 @@ function secondaryNavigationFor(primaryId) {
     case "dashboard":
       return [
         { id: "dashboard-home", label: "运行总览" },
+        { id: "dashboard-monitor", label: "运行监控" },
         { id: "dashboard-todos", label: "待办清单" },
         { id: "dashboard-warnings", label: "预警提示" },
       ];
@@ -3678,6 +3752,7 @@ const secondaryNavigation = computed(() => secondaryNavigationFor(currentPrimary
 const activeSecondaryNavId = computed(() => {
   switch (currentPrimaryNavId.value) {
     case "dashboard":
+      if (appState.view === "dashboard-monitor") return "dashboard-monitor";
       if (appState.view === "dashboard-todos") return "dashboard-todos";
       if (appState.view === "dashboard-warnings") return "dashboard-warnings";
       return "dashboard-home";
@@ -3880,6 +3955,7 @@ function secondaryNavCount(id) {
   if (currentPrimaryNavId.value === "analysis") return "";
   if (currentPrimaryNavId.value === "dashboard") {
     if (id === "dashboard-home") return "";
+    if (id === "dashboard-monitor") return "监控";
     if (id === "dashboard-todos") return `${dashboardTodoItems.length}`;
     if (id === "dashboard-warnings") return `${dashboardWarningItems.length}`;
   }
@@ -5331,6 +5407,9 @@ function openSecondaryNav(id) {
     case "dashboard-home":
       appState.view = "dashboard";
       return;
+    case "dashboard-monitor":
+      appState.view = "dashboard-monitor";
+      return;
     case "dashboard-todos":
       appState.view = "dashboard-todos";
       return;
@@ -6755,6 +6834,180 @@ function badgeTone(status) {
             </article>
           </div>
         </section>
+      </section>
+
+      <section v-if="appState.view === 'dashboard-monitor'" class="view active">
+        <div class="content-grid">
+          <section class="surface span-8">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">运行监控</p>
+                <h3>资源地图</h3>
+              </div>
+              <span class="caption">平移自数据看板资源地图</span>
+            </div>
+            <div class="map-analytics">
+              <div class="guizhou-map-shell">
+                <svg class="guizhou-map" viewBox="0 0 620 500" aria-label="贵州省资源地图">
+                  <path class="province-outline" :d="guizhouProvincePath" />
+                  <g v-for="region in analysisResourceCounts" :key="`monitor-${region.id}`">
+                    <path
+                      class="region-shape"
+                      :d="region.path"
+                      :fill="mapRegionFill(region.value)"
+                      stroke="#d8e1dc"
+                      stroke-width="2"
+                      @mousemove="showAnalysisTooltip($event, region.name, `${region.dimension}：${region.value}`)"
+                      @mouseleave="hideAnalysisTooltip"
+                    />
+                    <text :x="region.labelX" :y="region.labelY" text-anchor="middle">{{ region.name }}</text>
+                    <text :x="region.labelX" :y="region.labelY + 18" text-anchor="middle" class="map-value">{{ region.value }}</text>
+                  </g>
+                </svg>
+              </div>
+            </div>
+          </section>
+
+          <section class="surface span-4">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">地图说明</p>
+                <h3>地州资源排行</h3>
+              </div>
+            </div>
+            <div class="analysis-side-panel">
+              <article class="map-description-card">
+                <strong>展示说明</strong>
+                <p>按贵州九个市州展示资源分布，颜色越深表示资源数量越高。</p>
+              </article>
+              <article
+                v-for="region in analysisRankedRegions.slice(0, 6)"
+                :key="`monitor-rank-${region.id}`"
+                class="rank-item"
+                @mousemove="showAnalysisTooltip($event, region.name, `${region.dimension}：${region.value}`)"
+                @mouseleave="hideAnalysisTooltip"
+              >
+                <div>
+                  <strong>{{ region.name }}</strong>
+                  <p>{{ region.dimension }}</p>
+                </div>
+                <span>{{ region.value }}</span>
+              </article>
+            </div>
+          </section>
+
+          <section class="surface span-12">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">数据接入</p>
+                <h3>采集任务运行监控</h3>
+              </div>
+              <span class="caption">累计执行、近24小时状态与今日任务明细</span>
+            </div>
+            <div class="stats-grid stats-inline-4 monitor-stat-grid">
+              <article v-for="item in dashboardMonitorTaskCards" :key="item.label" class="stat-card">
+                <h3>{{ item.label }}</h3>
+                <div class="stat-value">{{ item.value }}</div>
+                <div class="stat-meta"><span>{{ item.meta }}</span></div>
+              </article>
+            </div>
+            <div class="table-wrap compact-table-wrap monitor-table-wrap">
+              <table class="data-table monitor-task-table">
+                <colgroup>
+                  <col style="width: 28%" />
+                  <col style="width: 12%" />
+                  <col style="width: 18%" />
+                  <col style="width: 18%" />
+                  <col style="width: 12%" />
+                  <col style="width: 12%" />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th>任务名称</th>
+                    <th>任务状态</th>
+                    <th>开始时间</th>
+                    <th>结束时间</th>
+                    <th>持续时间</th>
+                    <th>监控口径</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="item in dashboardTodayTaskDetails" :key="item.taskName">
+                    <td><strong>{{ item.taskName }}</strong></td>
+                    <td><span class="badge" :class="badgeTone(item.status)">{{ item.status }}</span></td>
+                    <td>{{ item.startTime }}</td>
+                    <td>{{ item.endTime }}</td>
+                    <td>{{ item.duration }}</td>
+                    <td>今日任务</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="surface span-12">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">数据共享</p>
+                <h3>服务调用运行监控</h3>
+              </div>
+              <span class="caption">服务规模、累计调用、状态分布与今日调用明细</span>
+            </div>
+            <div class="monitor-share-layout">
+              <div class="stats-grid stats-inline-4 monitor-stat-grid">
+                <article v-for="item in dashboardShareMonitorCards" :key="item.label" class="stat-card">
+                  <h3>{{ item.label }}</h3>
+                  <div class="stat-value">{{ item.value }}</div>
+                  <div class="stat-meta"><span>{{ item.meta }}</span></div>
+                </article>
+              </div>
+              <article class="monitor-donut-panel">
+                <div class="monitor-donut-gauge" :style="{ '--rate': `${dashboardSharedCallSuccessRate}%` }">
+                  <div>
+                    <strong>{{ dashboardSharedCallSuccessRate }}%</strong>
+                    <span>成功率</span>
+                  </div>
+                </div>
+                <div class="monitor-donut-legend">
+                  <span><i class="success"></i>成功 {{ dashboardSharedCallSuccess }} 次</span>
+                  <span><i class="failed"></i>失败 {{ dashboardSharedCallFailed }} 次</span>
+                </div>
+              </article>
+            </div>
+            <div class="table-wrap compact-table-wrap monitor-table-wrap">
+              <table class="data-table monitor-call-table">
+                <colgroup>
+                  <col style="width: 26%" />
+                  <col style="width: 19%" />
+                  <col style="width: 16%" />
+                  <col style="width: 17%" />
+                  <col style="width: 10%" />
+                  <col style="width: 12%" />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th>服务名称</th>
+                    <th>调用者信息</th>
+                    <th>调用时间</th>
+                    <th>共享清单</th>
+                    <th>调用状态</th>
+                    <th>调用方式</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="item in sharedDataCallCatalog" :key="`monitor-${item.id}`">
+                    <td><strong>{{ item.serviceName }}</strong></td>
+                    <td>{{ item.callerUnit }}</td>
+                    <td>{{ item.callStartTime }}</td>
+                    <td>{{ item.dataName }}</td>
+                    <td><span class="badge" :class="badgeTone(item.callStatus)">{{ item.callStatus }}</span></td>
+                    <td>{{ item.callMethod }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
       </section>
 
       <section v-if="appState.view === 'resources'" class="view active">
