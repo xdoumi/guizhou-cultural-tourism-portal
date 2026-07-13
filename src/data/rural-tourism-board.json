@@ -1,0 +1,142 @@
+{
+  "source": "村寨合计区域统计.xls",
+  "provinceTotals": {
+    "passed": 958,
+    "failed": 1477,
+    "inProgress": 77,
+    "total": 2512
+  },
+  "levelSummary": [
+    {
+      "level": "甲级",
+      "passed": 119,
+      "failed": 53,
+      "inProgress": 36,
+      "total": 208
+    },
+    {
+      "level": "乙级",
+      "passed": 423,
+      "failed": 313,
+      "inProgress": 28,
+      "total": 764
+    },
+    {
+      "level": "丙级",
+      "passed": 416,
+      "failed": 1111,
+      "inProgress": 13,
+      "total": 1540
+    }
+  ],
+  "citySummary": [
+    {
+      "city": "贵阳",
+      "passed": 72,
+      "failed": 26,
+      "inProgress": 26,
+      "total": 124,
+      "levels": {
+        "甲级": { "passed": 8, "failed": 6, "inProgress": 9, "total": 23 },
+        "乙级": { "passed": 33, "failed": 8, "inProgress": 17, "total": 58 },
+        "丙级": { "passed": 31, "failed": 12, "inProgress": 0, "total": 43 }
+      }
+    },
+    {
+      "city": "遵义",
+      "passed": 121,
+      "failed": 77,
+      "inProgress": 14,
+      "total": 212,
+      "levels": {
+        "甲级": { "passed": 30, "failed": 10, "inProgress": 9, "total": 49 },
+        "乙级": { "passed": 49, "failed": 6, "inProgress": 0, "total": 55 },
+        "丙级": { "passed": 42, "failed": 61, "inProgress": 5, "total": 108 }
+      }
+    },
+    {
+      "city": "六盘水",
+      "passed": 48,
+      "failed": 199,
+      "inProgress": 2,
+      "total": 249,
+      "levels": {
+        "甲级": { "passed": 13, "failed": 1, "inProgress": 1, "total": 15 },
+        "乙级": { "passed": 17, "failed": 73, "inProgress": 1, "total": 91 },
+        "丙级": { "passed": 18, "failed": 125, "inProgress": 0, "total": 143 }
+      }
+    },
+    {
+      "city": "安顺",
+      "passed": 190,
+      "failed": 211,
+      "inProgress": 14,
+      "total": 415,
+      "levels": {
+        "甲级": { "passed": 12, "failed": 15, "inProgress": 7, "total": 34 },
+        "乙级": { "passed": 52, "failed": 36, "inProgress": 1, "total": 89 },
+        "丙级": { "passed": 126, "failed": 160, "inProgress": 6, "total": 292 }
+      }
+    },
+    {
+      "city": "毕节",
+      "passed": 95,
+      "failed": 137,
+      "inProgress": 2,
+      "total": 234,
+      "levels": {
+        "甲级": { "passed": 16, "failed": 5, "inProgress": 0, "total": 21 },
+        "乙级": { "passed": 50, "failed": 16, "inProgress": 2, "total": 68 },
+        "丙级": { "passed": 29, "failed": 116, "inProgress": 0, "total": 145 }
+      }
+    },
+    {
+      "city": "铜仁",
+      "passed": 106,
+      "failed": 237,
+      "inProgress": 5,
+      "total": 348,
+      "levels": {
+        "甲级": { "passed": 10, "failed": 2, "inProgress": 1, "total": 13 },
+        "乙级": { "passed": 66, "failed": 79, "inProgress": 4, "total": 149 },
+        "丙级": { "passed": 30, "failed": 156, "inProgress": 0, "total": 186 }
+      }
+    },
+    {
+      "city": "黔东南",
+      "passed": 149,
+      "failed": 223,
+      "inProgress": 0,
+      "total": 372,
+      "levels": {
+        "甲级": { "passed": 8, "failed": 2, "inProgress": 0, "total": 10 },
+        "乙级": { "passed": 68, "failed": 29, "inProgress": 0, "total": 97 },
+        "丙级": { "passed": 73, "failed": 192, "inProgress": 0, "total": 265 }
+      }
+    },
+    {
+      "city": "黔南",
+      "passed": 117,
+      "failed": 123,
+      "inProgress": 5,
+      "total": 245,
+      "levels": {
+        "甲级": { "passed": 18, "failed": 9, "inProgress": 3, "total": 30 },
+        "乙级": { "passed": 51, "failed": 7, "inProgress": 0, "total": 58 },
+        "丙级": { "passed": 48, "failed": 107, "inProgress": 2, "total": 157 }
+      }
+    },
+    {
+      "city": "黔西南",
+      "passed": 60,
+      "failed": 244,
+      "inProgress": 9,
+      "total": 313,
+      "levels": {
+        "甲级": { "passed": 4, "failed": 3, "inProgress": 6, "total": 13 },
+        "乙级": { "passed": 37, "failed": 59, "inProgress": 3, "total": 99 },
+        "丙级": { "passed": 19, "failed": 182, "inProgress": 0, "total": 201 }
+      }
+    }
+  ]
+}
