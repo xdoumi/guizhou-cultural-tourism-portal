@@ -2358,6 +2358,14 @@ svg {
   min-width: 1040px;
 }
 
+.share-call-table {
+  min-width: 1220px;
+}
+
+.access-record-table {
+  min-width: 1120px;
+}
+
 .table-subtext {
   margin-top: 6px;
   max-width: 100%;

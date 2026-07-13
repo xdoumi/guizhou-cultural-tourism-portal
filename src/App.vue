@@ -381,7 +381,8 @@ const serviceNavigationItems = [
 const shareTertiaryItems = [
   { id: "share-list", label: "共享申请" },
   { id: "share-review", label: "共享审核" },
-  { id: "shared-data", label: "共享数据" },
+  { id: "shared-data", label: "共享清单" },
+  { id: "share-calls", label: "数据调用" },
 ];
 
 function regionAt(index) {
@@ -1153,6 +1154,48 @@ const dataAccessCatalog = [
     originSystem: "应急指挥子系统（在建）",
   },
 ];
+
+function buildAccessDailyRecords(item, index) {
+  const tablePrefix = item.dataType.includes("住宿")
+    ? "ods_hotel"
+    : item.dataType.includes("知识")
+      ? "dim_knowledge"
+      : item.dataType.includes("LBS")
+        ? "dwd_lbs"
+        : item.dataType.includes("消费")
+          ? "ads_consume"
+          : item.dataType.includes("气象")
+            ? "ods_weather"
+            : item.dataType.includes("视频")
+              ? "ods_video"
+              : item.dataType.includes("平台")
+                ? "ods_platform"
+                : "mdm_resource";
+  const tableNames = [
+    `${tablePrefix}_daily`,
+    `${tablePrefix}_detail`,
+    `${tablePrefix}_summary`,
+  ];
+
+  return tableNames.map((tableName, recordIndex) => {
+    const day = 11 - recordIndex;
+    const hour = 1 + ((index + recordIndex) % 4);
+    const isBuilding = item.status !== "已接入" && recordIndex === 0;
+    const startTime = `2026-07-${String(day).padStart(2, "0")} ${String(hour).padStart(2, "0")}:10`;
+    const endTime = isBuilding ? "执行中" : `2026-07-${String(day).padStart(2, "0")} ${String(hour).padStart(2, "0")}:${42 + recordIndex * 3}`;
+
+    return {
+      tableName,
+      updateDate: `2026-07-${String(day).padStart(2, "0")}`,
+      updateTime: isBuilding ? "执行中" : endTime,
+      updatedRows: isBuilding ? "同步中" : `${(8.6 + index * 1.7 + recordIndex * 0.9).toFixed(1)}万行`,
+      totalRows: `${(128 + index * 36 + recordIndex * 12).toLocaleString("zh-CN")}万行`,
+      taskStartTime: startTime,
+      taskEndTime: endTime,
+      taskStatus: isBuilding ? "进行中" : "成功",
+    };
+  });
+}
 
 const dataAssets = [
   {
@@ -2416,6 +2459,7 @@ dataAccessCatalog.forEach((item, index) => {
   item.dataVolume =
     item.dataVolume ??
     `${(36 + index * 11).toLocaleString("zh-CN")}万行`;
+  item.dailyRecords = item.dailyRecords ?? buildAccessDailyRecords(item, index);
 });
 
 dataAssets.forEach((item, index) => {
@@ -2672,6 +2716,74 @@ const sharedDataCatalog = ref([
       response: "可在共享门户按天下载标准报表。",
     },
     downloadDetail: "支持日报表下载，包含城市、日期、消费热度指数、消费笔数、客单价等字段。",
+  },
+]);
+
+const sharedDataCallCatalog = ref([
+  {
+    id: "call-1",
+    sharedDataId: "shared-1",
+    requestNo: "GZWL-GX-202607-001",
+    dataName: "重点景区客流五分钟数据",
+    callerUnit: "省文化和旅游厅办公室",
+    callStatus: "成功",
+    callStartTime: "2026-07-11 08:00:03",
+    callEndTime: "2026-07-11 08:00:18",
+    callMethod: "API接口调用",
+    sharedVolume: "12.8万行",
+    serviceName: "景区客流专题数据集",
+  },
+  {
+    id: "call-2",
+    sharedDataId: "shared-1",
+    requestNo: "GZWL-GX-202607-001",
+    dataName: "重点景区客流五分钟数据",
+    callerUnit: "省文化和旅游厅值班室",
+    callStatus: "成功",
+    callStartTime: "2026-07-11 09:05:10",
+    callEndTime: "2026-07-11 09:05:26",
+    callMethod: "API接口调用",
+    sharedVolume: "13.4万行",
+    serviceName: "景区客流专题数据集",
+  },
+  {
+    id: "call-3",
+    sharedDataId: "shared-3",
+    requestNo: "GZWL-GX-202607-004",
+    dataName: "消费热度日报表",
+    callerUnit: "贵阳市文化和旅游局",
+    callStatus: "成功",
+    callStartTime: "2026-07-11 07:30:00",
+    callEndTime: "2026-07-11 07:31:12",
+    callMethod: "批量下载",
+    sharedVolume: "2.6万行",
+    serviceName: "文旅消费热度服务",
+  },
+  {
+    id: "call-4",
+    sharedDataId: "shared-2",
+    requestNo: "GZWL-GX-202607-003",
+    dataName: "旅游资源主数据目录表",
+    callerUnit: "安顺市文化广电旅游局",
+    callStatus: "待开通",
+    callStartTime: "未开始",
+    callEndTime: "未开始",
+    callMethod: "目录下载",
+    sharedVolume: "0行",
+    serviceName: "旅游资源主数据查询 API",
+  },
+  {
+    id: "call-5",
+    sharedDataId: "shared-3",
+    requestNo: "GZWL-GX-202607-004",
+    dataName: "消费热度日报表",
+    callerUnit: "贵阳市文化和旅游局",
+    callStatus: "失败",
+    callStartTime: "2026-07-10 23:30:00",
+    callEndTime: "2026-07-10 23:30:07",
+    callMethod: "批量下载",
+    sharedVolume: "0行",
+    serviceName: "文旅消费热度服务",
   },
 ]);
 
@@ -3335,11 +3447,15 @@ const appState = reactive({
   sharedDataMethodFilter: "全部",
   sharedDataStatusFilter: "全部",
   sharedDataKeyword: "",
+  sharedCallMethodFilter: "全部",
+  sharedCallStatusFilter: "全部",
+  sharedCallKeyword: "",
   servicesPageSize: 10,
   accessPage: 1,
   shareListPage: 1,
   shareReviewPage: 1,
   sharedDataPage: 1,
+  sharedCallPage: 1,
   permissionModule: "users",
   analysisModule: "map",
   businessBoardModule: "ruralTourism",
@@ -3478,15 +3594,15 @@ const viewMetaMap = {
     tag: "流程页",
   },
   "shared-data": {
-    label: "共享数据清单",
+    label: "共享清单",
     eyebrow: "共享结果管理",
-    description: "查看审核通过后已开通共享的数据清单、方式和关联申请单。",
+    description: "查看审核通过后已开通共享的清单、方式和关联申请单。",
     tag: "流程页",
   },
   "shared-data-detail": {
-    label: "共享数据详情",
-    eyebrow: "共享数据详情",
-    description: "查看共享数据表、接口方式、共享条数和具体服务信息。",
+    label: "共享清单详情",
+    eyebrow: "共享清单详情",
+    description: "查看共享表、接口方式、共享条数和具体服务信息。",
     tag: "详情页",
   },
 };
@@ -3995,6 +4111,8 @@ const accessStatusOptions = computed(() => ["全部", ...new Set(dataAccessCatal
 const shareReviewStepOptions = computed(() => ["全部", ...new Set(shareApplications.value.map((item) => item.currentStep))]);
 const sharedDataMethodOptions = computed(() => ["全部", ...new Set(sharedDataCatalog.value.map((item) => item.shareMethod))]);
 const sharedDataStatusOptions = computed(() => ["全部", ...new Set(sharedDataCatalog.value.map((item) => item.status))]);
+const sharedCallMethodOptions = computed(() => ["全部", ...new Set(sharedDataCallCatalog.value.map((item) => item.callMethod))]);
+const sharedCallStatusOptions = computed(() => ["全部", ...new Set(sharedDataCallCatalog.value.map((item) => item.callStatus))]);
 const servicesPageSizeOptions = [10, 20, 50];
 
 const filteredSharedDataItems = computed(() => {
@@ -4016,6 +4134,19 @@ const selectedSharedData = computed(() => {
 
 const selectedSharedDataRequest = computed(() => {
   return shareApplications.value.find((item) => item.id === selectedSharedData.value?.requestId) ?? selectedShareApplication.value;
+});
+
+const filteredSharedCallItems = computed(() => {
+  const keyword = appState.sharedCallKeyword.trim();
+  return sharedDataCallCatalog.value.filter((item) => {
+    const methodMatch = appState.sharedCallMethodFilter === "全部" || item.callMethod === appState.sharedCallMethodFilter;
+    const statusMatch = appState.sharedCallStatusFilter === "全部" || item.callStatus === appState.sharedCallStatusFilter;
+    return (
+      methodMatch &&
+      statusMatch &&
+      keywordMatch(keyword, [item.dataName, item.requestNo, item.serviceName, item.callerUnit, item.callMethod, item.callStatus])
+    );
+  });
 });
 
 const filteredAccessItems = computed(() => {
@@ -4055,6 +4186,7 @@ const pagedShareReviewApplications = computed(() =>
   paginateItems(filteredShareReviewApplications.value, appState.shareReviewPage, appState.servicesPageSize),
 );
 const pagedSharedDataItems = computed(() => paginateItems(filteredSharedDataItems.value, appState.sharedDataPage, appState.servicesPageSize));
+const pagedSharedCallItems = computed(() => paginateItems(filteredSharedCallItems.value, appState.sharedCallPage, appState.servicesPageSize));
 
 const selectedAccessItem = computed(() => {
   if (appState.view === "access-detail") {
@@ -4172,10 +4304,19 @@ const currentServicesStatusSummary = computed(() => {
 
   if (appState.shareTertiary === "shared-data") {
     return [
-      { title: "共享数据总量", value: `${sharedDataCatalog.value.length} 项` },
+      { title: "共享清单总量", value: `${sharedDataCatalog.value.length} 项` },
       { title: "表下载", value: `${sharedDataCatalog.value.filter((item) => item.shareMethod === "表下载").length} 项` },
       { title: "接口推送", value: `${sharedDataCatalog.value.filter((item) => item.shareMethod === "接口推送").length} 项` },
       { title: "已开通", value: `${sharedDataCatalog.value.filter((item) => item.status === "已开通").length} 项` },
+    ];
+  }
+
+  if (appState.shareTertiary === "share-calls") {
+    return [
+      { title: "调用记录总量", value: `${sharedDataCallCatalog.value.length} 条` },
+      { title: "调用成功", value: `${sharedDataCallCatalog.value.filter((item) => item.callStatus === "成功").length} 条` },
+      { title: "调用失败", value: `${sharedDataCallCatalog.value.filter((item) => item.callStatus === "失败").length} 条` },
+      { title: "共享数据量", value: "28.8万行" },
     ];
   }
 
@@ -4191,6 +4332,7 @@ const currentServicesTotal = computed(() => {
   if (appState.shareModule === "access") return filteredAccessItems.value.length;
   if (appState.shareTertiary === "share-review") return filteredShareReviewApplications.value.length;
   if (appState.shareTertiary === "shared-data") return filteredSharedDataItems.value.length;
+  if (appState.shareTertiary === "share-calls") return filteredSharedCallItems.value.length;
   return filteredShareApplications.value.length;
 });
 
@@ -4198,6 +4340,7 @@ const currentServicesPage = computed(() => {
   if (appState.shareModule === "access") return appState.accessPage;
   if (appState.shareTertiary === "share-review") return appState.shareReviewPage;
   if (appState.shareTertiary === "shared-data") return appState.sharedDataPage;
+  if (appState.shareTertiary === "share-calls") return appState.sharedCallPage;
   return appState.shareListPage;
 });
 
@@ -4221,7 +4364,7 @@ const analysisAccessSummary = computed(() => {
   const latestShare = shareTrend[shareTrend.length - 1];
   return [
     { title: "接入数据表总量", value: `${dataAccessCatalog.length}` },
-    { title: "共享数据总量", value: `${serviceCatalog.length}` },
+    { title: "共享清单总量", value: `${serviceCatalog.length}` },
     { title: "最新接入月份", value: `${latestAccess.month} · ${latestAccess.value}` },
     { title: "最新共享月份", value: `${latestShare.month} · ${latestShare.value}` },
   ];
@@ -5315,7 +5458,7 @@ function selectShareModule(module) {
     }
     return;
   }
-  if (!["share-list", "share-review", "shared-data"].includes(appState.shareTertiary)) {
+  if (!["share-list", "share-review", "shared-data", "share-calls"].includes(appState.shareTertiary)) {
     appState.shareTertiary = "share-list";
   }
   if (!filteredShareApplications.value.some((item) => item.id === appState.selectedShareApplicationId) && filteredShareApplications.value[0]) {
@@ -5352,6 +5495,10 @@ function resetServicesPage(scope) {
     appState.sharedDataPage = 1;
     return;
   }
+  if (scope === "share-calls") {
+    appState.sharedCallPage = 1;
+    return;
+  }
   appState.shareListPage = 1;
 }
 
@@ -5376,6 +5523,10 @@ function changeServicesPage(direction) {
   }
   if (appState.shareTertiary === "shared-data") {
     appState.sharedDataPage = nextPage;
+    return;
+  }
+  if (appState.shareTertiary === "share-calls") {
+    appState.sharedCallPage = nextPage;
     return;
   }
   appState.shareListPage = nextPage;
@@ -5403,6 +5554,14 @@ function resetServicesFilters() {
     appState.sharedDataStatusFilter = "全部";
     appState.sharedDataKeyword = "";
     resetServicesPage("shared-data");
+    return;
+  }
+
+  if (appState.shareTertiary === "share-calls") {
+    appState.sharedCallMethodFilter = "全部";
+    appState.sharedCallStatusFilter = "全部";
+    appState.sharedCallKeyword = "";
+    resetServicesPage("share-calls");
     return;
   }
 
@@ -5584,6 +5743,23 @@ function buildSharedDataRecords(application) {
   return records;
 }
 
+function buildSharedDataCallRecords(records, application) {
+  const baseIndex = sharedDataCallCatalog.value.length + 1;
+  return records.map((record, index) => ({
+    id: `call-${baseIndex + index}`,
+    sharedDataId: record.id,
+    requestNo: application.applicationNo,
+    dataName: record.dataName,
+    callerUnit: application.applyUnit,
+    callStatus: "成功",
+    callStartTime: "2026-07-09 17:00:00",
+    callEndTime: "2026-07-09 17:00:24",
+    callMethod: record.shareMethod === "接口推送" ? "API接口调用" : "批量下载",
+    sharedVolume: record.rowCount,
+    serviceName: application.serviceName,
+  }));
+}
+
 function submitShareRequest() {
   const service = serviceCatalog.find((item) => item.id === shareRequestForm.serviceId) ?? serviceCatalog[0];
   const newApplication = {
@@ -5609,7 +5785,7 @@ function submitShareRequest() {
       { step: "提交申请", time: shareRequestForm.applyTime, status: "已完成", detail: `申请单位 ${shareRequestForm.applyUnit} 已提交共享申请。` },
       { step: "责任单位确认", time: "待处理", status: "进行中", detail: `等待 ${shareRequestForm.ownerDept} 确认共享范围、字段边界和责任归属。` },
       { step: "数据办审核", time: "未开始", status: "未开始", detail: "责任单位确认后进入数据办审核环节。" },
-      { step: "共享开通", time: "未开始", status: "未开始", detail: "审核通过后生成共享数据清单并完成授权开通。" },
+      { step: "共享开通", time: "未开始", status: "未开始", detail: "审核通过后生成共享清单并完成授权开通。" },
     ],
   };
 
@@ -5635,13 +5811,15 @@ function approveShareRequest(id = appState.selectedShareApplicationId) {
       return { ...item, time: "2026-07-09 15:10", status: "已完成", detail: "数据办已完成审核，允许开通共享服务。" };
     }
     if (item.step === "共享开通") {
-      return { ...item, time: "2026-07-09 16:30", status: "已完成", detail: "已生成共享数据清单，接口和下载权限已开通。" };
+      return { ...item, time: "2026-07-09 16:30", status: "已完成", detail: "已生成共享清单，接口和下载权限已开通。" };
     }
     return item;
   });
 
   if (!sharedDataCatalog.value.some((item) => item.requestId === target.id)) {
-    sharedDataCatalog.value.unshift(...buildSharedDataRecords(target));
+    const openedRecords = buildSharedDataRecords(target);
+    sharedDataCatalog.value.unshift(...openedRecords);
+    sharedDataCallCatalog.value.unshift(...buildSharedDataCallRecords(openedRecords, target));
   } else {
     sharedDataCatalog.value = sharedDataCatalog.value.map((item) =>
       item.requestId === target.id ? { ...item, status: "已开通", openedTime: "2026-07-09 16:30" } : item,
@@ -6186,8 +6364,8 @@ function jumpToService(serviceId) {
 }
 
 function badgeTone(status) {
-  if (status === "已开通" || status === "已接入" || status === "已沉淀" || status === "已运行") return "primary";
-  if (status === "审核中" || status === "补充材料" || status === "建设中" || status === "待接入") return "warn";
+  if (status === "已开通" || status === "已接入" || status === "已沉淀" || status === "已运行" || status === "成功") return "primary";
+  if (status === "审核中" || status === "补充材料" || status === "建设中" || status === "待接入" || status === "进行中" || status === "待开通") return "warn";
   return "neutral";
 }
 </script>
@@ -7692,7 +7870,7 @@ function badgeTone(status) {
             </label>
           </div>
 
-          <div v-else class="query-form-grid">
+          <div v-else-if="activeShareTertiaryId === 'shared-data'" class="query-form-grid">
             <label class="query-field">
               <span>共享方式</span>
               <select v-model="appState.sharedDataMethodFilter" @change="resetServicesPage('shared-data')">
@@ -7710,6 +7888,25 @@ function badgeTone(status) {
               <input v-model="appState.sharedDataKeyword" placeholder="请输入数据名称、表名称、申请单号或服务名称" @input="resetServicesPage('shared-data')" />
             </label>
           </div>
+
+          <div v-else class="query-form-grid">
+            <label class="query-field">
+              <span>调用方式</span>
+              <select v-model="appState.sharedCallMethodFilter" @change="resetServicesPage('share-calls')">
+                <option v-for="item in sharedCallMethodOptions" :key="item" :value="item">{{ item }}</option>
+              </select>
+            </label>
+            <label class="query-field">
+              <span>调用状态</span>
+              <select v-model="appState.sharedCallStatusFilter" @change="resetServicesPage('share-calls')">
+                <option v-for="item in sharedCallStatusOptions" :key="item" :value="item">{{ item }}</option>
+              </select>
+            </label>
+            <label class="query-field query-field-wide">
+              <span>关键字</span>
+              <input v-model="appState.sharedCallKeyword" placeholder="请输入数据名称、申请单号、调用单位或服务名称" @input="resetServicesPage('share-calls')" />
+            </label>
+          </div>
         </section>
 
         <div class="content-grid">
@@ -7723,8 +7920,10 @@ function badgeTone(status) {
                       : activeShareTertiaryId === "share-review"
                         ? "审核清单"
                         : activeShareTertiaryId === "shared-data"
-                          ? "共享数据清单"
-                          : "申请清单"
+                          ? "共享清单"
+                          : activeShareTertiaryId === "share-calls"
+                            ? "调用记录"
+                            : "申请清单"
                   }}
                 </p>
                 <h3>
@@ -7734,8 +7933,10 @@ function badgeTone(status) {
                       : activeShareTertiaryId === "share-review"
                         ? "共享审核"
                         : activeShareTertiaryId === "shared-data"
-                          ? "共享数据"
-                          : "数据共享"
+                          ? "共享清单"
+                          : activeShareTertiaryId === "share-calls"
+                            ? "数据调用"
+                            : "数据共享"
                   }}
                 </h3>
               </div>
@@ -7747,6 +7948,9 @@ function badgeTone(status) {
               </div>
               <span v-else-if="appState.shareModule === 'share' && activeShareTertiaryId === 'shared-data'" class="caption">
                 共 {{ filteredSharedDataItems.length }} 项
+              </span>
+              <span v-else-if="appState.shareModule === 'share' && activeShareTertiaryId === 'share-calls'" class="caption">
+                共 {{ filteredSharedCallItems.length }} 条
               </span>
               <span v-else class="caption">共 {{ filteredAccessItems.length }} 项</span>
             </div>
@@ -7933,7 +8137,7 @@ function badgeTone(status) {
                 <button class="secondary-button" :disabled="currentServicesPage >= currentServicesPageCount" @click="changeServicesPage(1)">下一页</button>
               </div>
             </div>
-            <div v-else class="table-wrap">
+            <div v-else-if="activeShareTertiaryId === 'shared-data'" class="table-wrap">
               <table class="data-table shared-data-table">
                 <colgroup>
                   <col style="width: 24%" />
@@ -7970,7 +8174,48 @@ function badgeTone(status) {
                 </tbody>
               </table>
             </div>
-            <div v-if="appState.shareModule === 'share' && activeShareTertiaryId === 'shared-data'" class="table-footer">
+            <div v-else class="table-wrap">
+              <table class="data-table share-call-table">
+                <colgroup>
+                  <col style="width: 18%" />
+                  <col style="width: 13%" />
+                  <col style="width: 14%" />
+                  <col style="width: 10%" />
+                  <col style="width: 14%" />
+                  <col style="width: 14%" />
+                  <col style="width: 9%" />
+                  <col style="width: 8%" />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th>数据名称</th>
+                    <th>调用单位</th>
+                    <th>调用方式</th>
+                    <th>调用状态</th>
+                    <th>调用开始时间</th>
+                    <th>调用结束时间</th>
+                    <th>共享数据量</th>
+                    <th>申请单号</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="item in pagedSharedCallItems" :key="item.id">
+                    <td>
+                      <strong>{{ item.dataName }}</strong>
+                      <div class="caption table-subtext">{{ item.serviceName }}</div>
+                    </td>
+                    <td>{{ item.callerUnit }}</td>
+                    <td>{{ item.callMethod }}</td>
+                    <td><span class="badge" :class="badgeTone(item.callStatus)">{{ item.callStatus }}</span></td>
+                    <td>{{ item.callStartTime }}</td>
+                    <td>{{ item.callEndTime }}</td>
+                    <td>{{ item.sharedVolume }}</td>
+                    <td>{{ item.requestNo }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div v-if="appState.shareModule === 'share' && (activeShareTertiaryId === 'shared-data' || activeShareTertiaryId === 'share-calls')" class="table-footer">
               <div class="table-footer-meta">
                 <span>第 {{ currentServicesPageStart }}-{{ currentServicesPageEnd }} 条</span>
                 <span>共 {{ currentServicesTotal }} 条</span>
@@ -8021,6 +8266,47 @@ function badgeTone(status) {
               <div class="detail-item"><span>当前状态</span><strong>{{ selectedAccessItem.status }}</strong></div>
               <div class="detail-item full-span"><span>来源系统</span><strong class="detail-value">{{ selectedAccessItem.originSystem }}</strong></div>
             </div>
+            <div class="detail-block">
+              <h4>每日接入记录</h4>
+              <div class="table-wrap compact-table-wrap">
+                <table class="data-table access-record-table">
+                  <colgroup>
+                    <col style="width: 18%" />
+                    <col style="width: 11%" />
+                    <col style="width: 14%" />
+                    <col style="width: 12%" />
+                    <col style="width: 12%" />
+                    <col style="width: 14%" />
+                    <col style="width: 14%" />
+                    <col style="width: 5%" />
+                  </colgroup>
+                  <thead>
+                    <tr>
+                      <th>表名</th>
+                      <th>更新日期</th>
+                      <th>每天更新时间</th>
+                      <th>更新数据量</th>
+                      <th>当前累计数据量</th>
+                      <th>任务开始时间</th>
+                      <th>任务结束时间</th>
+                      <th>状态</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="record in selectedAccessItem.dailyRecords" :key="`${selectedAccessItem.id}-${record.tableName}-${record.updateDate}`">
+                      <td><strong>{{ record.tableName }}</strong></td>
+                      <td>{{ record.updateDate }}</td>
+                      <td>{{ record.updateTime }}</td>
+                      <td>{{ record.updatedRows }}</td>
+                      <td>{{ record.totalRows }}</td>
+                      <td>{{ record.taskStartTime }}</td>
+                      <td>{{ record.taskEndTime }}</td>
+                      <td><span class="badge" :class="badgeTone(record.taskStatus)">{{ record.taskStatus }}</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </section>
       </section>
@@ -8038,7 +8324,7 @@ function badgeTone(status) {
             </div>
             <div class="toolbar-actions">
               <button class="action-link" @click="openShareReviewDetail(selectedShareApplication?.id)">查看审核流程</button>
-              <button class="action-link" @click="openSharedDataFromApplication(selectedShareApplication?.id)">查看共享数据</button>
+              <button class="action-link" @click="openSharedDataFromApplication(selectedShareApplication?.id)">查看共享清单</button>
             </div>
           </div>
           <div v-if="selectedShareApplication" class="detail-content">
@@ -8193,7 +8479,7 @@ function badgeTone(status) {
                 <Send :size="18" />
                 审核通过并开通共享
               </button>
-              <button v-else class="action-link" @click="openSharedDataFromApplication(selectedShareApplication?.id)">查看共享数据</button>
+              <button v-else class="action-link" @click="openSharedDataFromApplication(selectedShareApplication?.id)">查看共享清单</button>
             </div>
           </div>
           <div v-if="selectedShareApplication" class="detail-content">
@@ -8240,9 +8526,9 @@ function badgeTone(status) {
             <div>
               <button class="back-button" @click="backToSharedDataList">
                 <ChevronLeft :size="16" />
-                返回共享数据清单
+                返回共享清单
               </button>
-              <p class="eyebrow">共享数据详情</p>
+              <p class="eyebrow">共享清单详情</p>
               <h3>{{ selectedSharedData?.dataName }}</h3>
             </div>
             <div class="toolbar-actions">
