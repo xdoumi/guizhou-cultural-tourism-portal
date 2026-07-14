@@ -2982,7 +2982,6 @@ const analysisMetricOptions = [
 ];
 
 const analysisModules = [
-  { id: "map", label: "资源地图" },
   { id: "access", label: "数据接入与共享概况" },
   { id: "business", label: "业务看板" },
 ];
@@ -3524,7 +3523,7 @@ const appState = reactive({
   sharedDataPage: 1,
   sharedCallPage: 1,
   permissionModule: "users",
-  analysisModule: "map",
+  analysisModule: "access",
   businessBoardModule: "ruralTourism",
   businessBoardView: "matrix",
   analysisMetric: "total",
@@ -6842,9 +6841,14 @@ function badgeTone(status) {
             <div class="section-head">
               <div>
                 <p class="eyebrow">运行监控</p>
-                <h3>资源地图</h3>
+                <h3>贵州资源分布</h3>
               </div>
-              <span class="caption">平移自数据看板资源地图</span>
+              <label class="inline-select">
+                <span>统计口径</span>
+                <select v-model="appState.analysisMetric">
+                  <option v-for="item in analysisMetricOptions" :key="item.id" :value="item.id">{{ item.label }}</option>
+                </select>
+              </label>
             </div>
             <div class="map-analytics">
               <div class="guizhou-map-shell">
@@ -8895,13 +8899,7 @@ function badgeTone(status) {
             <span class="toolbar-label">三级菜单</span>
             <strong>{{ analysisModules.find((item) => item.id === appState.analysisModule)?.label }}</strong>
           </div>
-          <label v-if="appState.analysisModule === 'map'" class="inline-select">
-            <span>统计口径</span>
-            <select v-model="appState.analysisMetric">
-              <option v-for="item in analysisMetricOptions" :key="item.id" :value="item.id">{{ item.label }}</option>
-            </select>
-          </label>
-          <div v-else-if="appState.analysisModule === 'business'" class="toolbar-actions">
+          <div v-if="appState.analysisModule === 'business'" class="toolbar-actions">
             <div class="filter-chips">
               <button
                 v-for="item in businessBoardModules"
@@ -8916,70 +8914,7 @@ function badgeTone(status) {
           </div>
         </div>
 
-        <div v-if="appState.analysisModule === 'map'" class="content-grid">
-          <section class="surface span-8">
-            <div class="section-head">
-              <div>
-                <p class="eyebrow">资源地图</p>
-                <h3>贵州省资源分布</h3>
-              </div>
-            </div>
-            <div class="map-analytics">
-              <div class="guizhou-map-shell">
-                <svg class="guizhou-map" viewBox="0 0 620 500" aria-label="贵州省资源地图">
-                  <path class="province-outline" :d="guizhouProvincePath" />
-                  <g v-for="region in analysisResourceCounts" :key="region.id">
-                    <path
-                      class="region-shape"
-                      :d="region.path"
-                      :fill="mapRegionFill(region.value)"
-                      stroke="#d8e1dc"
-                      stroke-width="2"
-                      @mousemove="showAnalysisTooltip($event, region.name, `${region.dimension}：${region.value}`)"
-                      @mouseleave="hideAnalysisTooltip"
-                    />
-                    <text :x="region.labelX" :y="region.labelY" text-anchor="middle">{{ region.name }}</text>
-                    <text :x="region.labelX" :y="region.labelY + 18" text-anchor="middle" class="map-value">{{ region.value }}</text>
-                  </g>
-                </svg>
-              </div>
-            </div>
-          </section>
-
-          <section class="surface span-4">
-            <div class="section-head">
-              <div>
-                <p class="eyebrow">地图说明</p>
-                <h3>地州资源排行</h3>
-              </div>
-            </div>
-            <div class="analysis-side-panel">
-              <article class="map-description-card">
-                <strong>展示说明</strong>
-                <p>按贵州九个市州真实区位关系展示资源分布，颜色越深表示该地州资源数量越高。</p>
-              </article>
-              <article class="map-description-card">
-                <strong>统计规则</strong>
-                <p>支持按总资源数或按资源主体类型切换口径，地图和排行同步联动更新。</p>
-              </article>
-              <article
-                v-for="region in analysisRankedRegions"
-                :key="`side-${region.id}`"
-                class="rank-item"
-                @mousemove="showAnalysisTooltip($event, region.name, `${region.dimension}：${region.value}`)"
-                @mouseleave="hideAnalysisTooltip"
-              >
-                <div>
-                  <strong>{{ region.name }}</strong>
-                  <p>{{ region.dimension }}</p>
-                </div>
-                <span>{{ region.value }}</span>
-              </article>
-            </div>
-          </section>
-        </div>
-
-        <div v-else-if="appState.analysisModule === 'access'" class="content-grid">
+        <div v-if="appState.analysisModule === 'access'" class="content-grid">
           <section class="surface span-12">
             <div class="section-head">
               <div>
