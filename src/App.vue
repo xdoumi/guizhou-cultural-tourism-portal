@@ -4337,6 +4337,60 @@ const assetCenterOverviewCards = computed(() => [
   { title: "可共享资产", value: `${visibleDataAssets.value.filter((item) => item.shareStatus !== "内部使用").length + metrics.length} 项`, meta: "支撑共享申请和授权使用" },
 ]);
 
+const dashboardAssetCatalogEntries = computed(() => [
+  ...dataAssets,
+  ...metrics.map((item) => ({
+    ...item,
+    type: "指标资产",
+    status: "已发布",
+    ownerDept: item.owner,
+    shareStatus: "已发布",
+    serviceMode: "指标服务 + 智能问数",
+  })),
+]);
+
+const dashboardAssetTypeRows = computed(() => {
+  const typeOrder = ["主数据资产", "主题数据资产", "标签资产", "知识资产", "指标资产", "服务资产"];
+  const descriptionMap = {
+    主数据资产: "统一资源、住宿、文化和涉旅主体底账",
+    主题数据资产: "围绕客流、住宿、监管、信用和运行专题沉淀",
+    标签资产: "支撑客群画像、消费热度和信用分层",
+    知识资产: "服务智能体问答、知识检索和视频专题",
+    指标资产: "统一指标口径、来源、刷新频率和应用场景",
+    服务资产: "面向共享交换、智能应用和业务系统调用",
+  };
+  return typeOrder.map((type) => {
+    const entries = dashboardAssetCatalogEntries.value.filter((item) => item.type === type);
+    const readyCount = entries.filter((item) => item.status?.includes("已")).length;
+    const buildingCount = entries.filter((item) => item.status?.includes("建设")).length;
+    return {
+      type,
+      count: entries.length,
+      readyCount,
+      buildingCount,
+      ratio: dashboardAssetCatalogEntries.value.length ? Math.round((entries.length / dashboardAssetCatalogEntries.value.length) * 100) : 0,
+      description: descriptionMap[type],
+      owner: [...new Set(entries.map((item) => item.ownerDept).filter(Boolean))].slice(0, 2).join("、") || "数据办",
+      refresh: [...new Set(entries.map((item) => item.refresh).filter(Boolean))].slice(0, 2).join(" / ") || "按需更新",
+      shareStatus: [...new Set(entries.map((item) => item.shareStatus).filter(Boolean))].slice(0, 2).join("、") || "按目录授权",
+    };
+  });
+});
+
+const dashboardAssetMonitorCards = computed(() => {
+  const entries = dashboardAssetCatalogEntries.value;
+  const readyCount = entries.filter((item) => item.status?.includes("已")).length;
+  const buildingCount = entries.filter((item) => item.status?.includes("建设")).length;
+  const sharedCount = entries.filter((item) => item.shareStatus && item.shareStatus !== "内部使用").length;
+  return [
+    { label: "目录资产总量", value: `${entries.length}项`, meta: "数据资产目录 + 指标目录" },
+    { label: "资产分类", value: `${dashboardAssetTypeRows.value.filter((item) => item.count > 0).length}类`, meta: "主数据、主题、标签、知识、指标、服务" },
+    { label: "已沉淀/发布", value: `${readyCount}项`, meta: "可纳入应用和共享服务" },
+    { label: "建设中资产", value: `${buildingCount}项`, meta: "持续接入治理与完善" },
+    { label: "可共享资产", value: `${sharedCount}项`, meta: "按授权、接口或目录方式使用" },
+  ];
+});
+
 const assetThemeDomainRows = computed(() =>
   metricDomainOptions.value
     .filter((item) => item !== "全部")
@@ -6897,6 +6951,67 @@ function badgeTone(status) {
                 </div>
                 <span>{{ region.value }}</span>
               </article>
+            </div>
+          </section>
+
+          <section class="surface span-12">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">数据资产监控</p>
+                <h3>数据资产目录分类汇总</h3>
+              </div>
+              <span class="caption">按数据资产目录和指标目录归集统计</span>
+            </div>
+            <div class="stats-grid monitor-asset-stat-grid">
+              <article v-for="item in dashboardAssetMonitorCards" :key="item.label" class="stat-card asset-stat-card">
+                <h3>{{ item.label }}</h3>
+                <div class="stat-value">{{ item.value }}</div>
+                <div class="stat-meta"><span>{{ item.meta }}</span></div>
+              </article>
+            </div>
+            <div class="table-wrap compact-table-wrap monitor-table-wrap">
+              <table class="data-table monitor-asset-table">
+                <colgroup>
+                  <col style="width: 15%" />
+                  <col style="width: 12%" />
+                  <col style="width: 20%" />
+                  <col style="width: 13%" />
+                  <col style="width: 14%" />
+                  <col style="width: 13%" />
+                  <col style="width: 13%" />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th>资产分类</th>
+                    <th>目录数量</th>
+                    <th>分类说明</th>
+                    <th>责任单位</th>
+                    <th>更新频率</th>
+                    <th>共享状态</th>
+                    <th>占比</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="item in dashboardAssetTypeRows" :key="item.type">
+                    <td><strong>{{ item.type }}</strong></td>
+                    <td>{{ item.count }} 项</td>
+                    <td>{{ item.description }}</td>
+                    <td>{{ item.owner }}</td>
+                    <td>{{ item.refresh }}</td>
+                    <td>
+                      <span class="badge" :class="item.buildingCount ? 'warn' : 'primary'">
+                        {{ item.readyCount }} 已就绪 / {{ item.buildingCount }} 建设中
+                      </span>
+                    </td>
+                    <td>
+                      <div class="asset-ratio-cell">
+                        <i :style="{ width: `${item.ratio}%` }"></i>
+                        <em>{{ item.ratio }}%</em>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </section>
 

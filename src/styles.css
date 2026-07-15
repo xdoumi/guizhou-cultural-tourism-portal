@@ -2674,6 +2674,11 @@ svg {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.monitor-asset-stat-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin-bottom: 16px;
+}
+
 .map-analytics {
   display: grid;
 }
@@ -3470,6 +3475,7 @@ svg {
   }
 
   .stats-inline-4,
+  .monitor-asset-stat-grid,
   .board-summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -3629,6 +3635,7 @@ svg {
   .stats-grid,
   .stats-inline,
   .stats-inline-4,
+  .monitor-asset-stat-grid,
   .module-grid,
   .service-grid,
   .resource-map,
