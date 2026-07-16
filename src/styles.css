@@ -1345,6 +1345,37 @@ svg {
   margin-top: 14px;
 }
 
+.query-dedicated-layout {
+  display: grid;
+  gap: 14px;
+}
+
+.query-support-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.query-support-card {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-muted);
+  text-align: left;
+}
+
+.query-support-card.active {
+  border-color: rgba(15, 124, 99, 0.28);
+  background: #f3faf7;
+}
+
+.query-support-card p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
 .query-side-stack {
   display: grid;
   gap: 12px;
@@ -3435,7 +3466,8 @@ svg {
 
   .query-theme-grid,
   .query-metric-grid,
-  .query-report-grid {
+  .query-report-grid,
+  .query-support-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -3654,7 +3686,8 @@ svg {
 
   .query-theme-grid,
   .query-metric-grid,
-  .query-report-grid {
+  .query-report-grid,
+  .query-support-grid {
     grid-template-columns: 1fr;
   }
 

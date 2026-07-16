@@ -1706,6 +1706,18 @@ const queryThemeCatalog = [
     description: "围绕数据接入、共享开通、指标复用和智能应用运行开展查询分析。",
     metrics: ["data_access_total", "shared_service_total", "indicator_reuse_count", "ai_query_calls"],
   },
+  {
+    id: "area-query",
+    label: "区域数据查询",
+    description: "面向省、市州、区县开展区域客流量和区域游客画像查询、统计和导出。",
+    metrics: ["area_flow", "area_visitor_profile"],
+  },
+  {
+    id: "scenic-query",
+    label: "景区数据查询",
+    description: "面向景区开展游客接待、游客画像和游客预约数据查询、统计和导出。",
+    metrics: ["scenic_reception", "scenic_visitor_profile", "scenic_reservation"],
+  },
 ];
 
 const queryResultViews = [
@@ -1719,6 +1731,7 @@ const queryTimePresetOptions = [
   { id: "year-2026", label: "2026年" },
   { id: "month-2026-07", label: "2026年7月" },
   { id: "recent-7", label: "近7日" },
+  { id: "holiday-2026", label: "节假日" },
 ];
 
 const querySourceFactorMap = {
@@ -2140,6 +2153,76 @@ const queryMetricCatalog = [
     granularityOptions: ["日", "月"],
     monthlyBase: [1280, 1460, 1690, 1880, 2120, 2280, 2416],
   },
+  {
+    id: "area_flow",
+    label: "区域客流量",
+    theme: "area-query",
+    unit: "万人次",
+    mode: "timeseries",
+    description: "支持省、市州、区县区域客流量对接数据查询、统计和导出。",
+    definition: "汇聚 LBS、运营商、交通和重点场所客流数据，按区域层级统一形成区域客流统计指标。",
+    dimensions: ["区域层级", "市州", "区县", "月份", "来源渠道"],
+    sources: ["综合口径", "百度", "电信", "高德"],
+    granularityOptions: ["日", "周", "月", "季度", "半年", "年", "节假日"],
+    monthlyBase: [860, 936, 1048, 1186, 1308, 1422, 1536],
+    relatedMetricName: "发布客流",
+  },
+  {
+    id: "area_visitor_profile",
+    label: "区域游客画像",
+    theme: "area-query",
+    unit: "万人次",
+    mode: "timeseries",
+    description: "支持省、市州、区县区域游客画像对接数据查询、统计和导出。",
+    definition: "围绕游客性别、年龄、出行方式、停留时长、来源地、旅游半径、夜游情况和平均旅游城市等画像维度统计。",
+    dimensions: ["性别", "年龄", "出行方式", "游客停留时长", "游客来源地", "旅游半径", "夜游情况", "平均旅游城市"],
+    sources: ["综合口径", "百度", "电信", "高德"],
+    granularityOptions: ["日", "周", "月", "季度", "半年", "年", "节假日"],
+    monthlyBase: [430, 468, 524, 593, 654, 711, 768],
+    relatedMetricName: "游客来源占比",
+  },
+  {
+    id: "scenic_reception",
+    label: "游客接待",
+    theme: "scenic-query",
+    unit: "万人次",
+    mode: "timeseries",
+    description: "支持景区接待客流数据查询、统计和导出，覆盖总客流、实时在园和日累计接待等。",
+    definition: "对接景区闸机、票务、预约和 LBS 数据，按小时、日、周、月、季度、半年、年及节假日维度统计。",
+    dimensions: ["景区", "接待类型", "景区等级", "月份"],
+    sources: ["综合口径", "闸机", "票务", "百度"],
+    granularityOptions: ["小时", "日", "周", "月", "季度", "半年", "年", "节假日"],
+    monthlyBase: [268, 286, 314, 352, 396, 426, 468],
+    relatedMetricName: "日累计入园人数",
+  },
+  {
+    id: "scenic_visitor_profile",
+    label: "游客画像",
+    theme: "scenic-query",
+    unit: "万人次",
+    mode: "timeseries",
+    description: "支持景区游客画像对接数据查询、统计和导出。",
+    definition: "围绕游客性别、年龄、停留时长和来源地进行景区画像统计，支持日、月、年、节假日维度。",
+    dimensions: ["景区", "性别", "年龄", "游客停留时长", "游客来源地"],
+    sources: ["综合口径", "百度", "电信"],
+    granularityOptions: ["日", "月", "年", "节假日"],
+    monthlyBase: [132, 144, 158, 176, 198, 213, 234],
+    relatedMetricName: "游客来源占比",
+  },
+  {
+    id: "scenic_reservation",
+    label: "游客预约",
+    theme: "scenic-query",
+    unit: "万单",
+    mode: "timeseries",
+    description: "支持景区游客预约对接数据查询、统计和导出。",
+    definition: "汇聚景区预约平台、票务平台和分时预约记录，支持日、月、年维度统计。",
+    dimensions: ["景区", "预约渠道", "景区等级", "月份"],
+    sources: ["票务", "预约平台", "综合口径"],
+    granularityOptions: ["日", "月", "年"],
+    monthlyBase: [86, 92, 104, 118, 132, 146, 162],
+    relatedMetricName: "门票订单量",
+  },
 ];
 
 const queryReportTemplates = [
@@ -2225,6 +2308,8 @@ const queryDimensionFallback = {
   consume: "市州",
   emergency: "市州",
   foundation: "月份",
+  "area-query": "市州",
+  "scenic-query": "景区",
 };
 
 const assetDetailBlueprints = {
@@ -2988,6 +3073,8 @@ const analysisModules = [
 
 const queryModules = [
   { id: "query-overview", label: "关键指标" },
+  { id: "query-area", label: "区域数据查询" },
+  { id: "query-scenic", label: "景区数据查询" },
   { id: "query-explore", label: "多维查询" },
   { id: "query-reports", label: "专题报表" },
   { id: "query-favorites", label: "我的查询" },
@@ -3818,8 +3905,12 @@ const shareTertiaryLabel = computed(() => shareTertiaryItems.find((item) => item
 const queryCityOptions = [...new Set(resources.map((item) => item.city))];
 const queryCountyOptions = [...new Set(resources.map((item) => item.county))];
 const queryScenicOptions = resources.filter((item) => item.category === "景区").map((item) => item.name).slice(0, 12);
+const queryAreaLevelOptions = ["省", "市州", "区县"];
 const queryCityResourceCountMap = Object.fromEntries(
   queryCityOptions.map((city) => [city, resources.filter((item) => item.city === city).length]),
+);
+const queryScenicWeightMap = Object.fromEntries(
+  queryScenicOptions.map((name, index) => [name, 0.18 - index * 0.008]),
 );
 const queryCityWeightTotal = queryCityOptions.reduce((sum, city) => sum + queryCityResourceCountMap[city] + 4, 0);
 const queryCityWeightMap = Object.fromEntries(
@@ -3831,6 +3922,52 @@ const queryResourceCategoryOptions = ["全部", ...allResourceCategories];
 const queryGeoDimensions = ["市州", "区县", "景区"];
 const queryResourceBaseDimensions = ["市州", "区县"];
 const queryFoundationDimensions = ["月份", "数据类型", "来源渠道", "共享类型", "责任单位", "应用场景"];
+const queryAreaModuleDefaults = {
+  theme: "area-query",
+  metricId: "area_flow",
+  timePreset: "month-2026-07",
+  granularity: "日",
+  region: "全省",
+  dimension: "市州",
+  source: "综合口径",
+  resourceCategory: "全部",
+  levelFilter: "全部",
+  chargeFilter: "全部",
+};
+const queryScenicModuleDefaults = {
+  theme: "scenic-query",
+  metricId: "scenic_reception",
+  timePreset: "month-2026-07",
+  granularity: "日",
+  region: queryScenicOptions[0] ?? "黄果树旅游区",
+  dimension: "景区",
+  source: "综合口径",
+  resourceCategory: "全部",
+  levelFilter: "全部",
+  chargeFilter: "全部",
+};
+const queryDedicatedModuleMeta = {
+  "query-area": {
+    eyebrow: "区域数据查询",
+    title: "区域客流与游客画像查询",
+    description: "支持区域客流量、区域游客画像对接数据查询、导出，并按日、周、月、季度、半年、年、节假日维度统计。",
+    theme: "area-query",
+    defaultConfig: queryAreaModuleDefaults,
+    scopeLabel: "区域范围",
+    scopeOptions: ["全省", ...queryCityOptions, ...queryCountyOptions],
+    quickDimensions: ["市州", "区县", "性别", "年龄", "游客来源地", "出行方式", "夜游情况"],
+  },
+  "query-scenic": {
+    eyebrow: "景区数据查询",
+    title: "游客接待、画像与预约查询",
+    description: "支持游客接待、游客画像和游客预约数据查询、导出，覆盖小时、日、周、月、季度、半年、年及节假日统计。",
+    theme: "scenic-query",
+    defaultConfig: queryScenicModuleDefaults,
+    scopeLabel: "景区名称",
+    scopeOptions: queryScenicOptions,
+    quickDimensions: ["景区", "接待类型", "性别", "年龄", "游客停留时长", "游客来源地", "预约渠道"],
+  },
+};
 const queryActionMessage = ref("选择关键指标后，可按时间、区域和主题维度开展自助查询。");
 const savedQueryItems = reactive([
   {
@@ -3884,21 +4021,44 @@ const showQueryTimeFields = computed(() => !isDraftResourceQuery.value);
 const showQueryRegionField = computed(() => activeQueryMetric.value?.theme !== "foundation");
 const showQueryResourceFields = computed(() => activeQueryMetric.value?.theme === "resource");
 const showQuerySourceField = computed(() => (activeQueryMetric.value?.sources?.length ?? 0) > 1);
+const activeDedicatedQueryMeta = computed(() => queryDedicatedModuleMeta[appState.queryModule]);
+const dedicatedQueryMetricOptions = computed(() =>
+  activeDedicatedQueryMeta.value
+    ? queryMetricCatalog.filter((item) => item.theme === activeDedicatedQueryMeta.value.theme)
+    : [],
+);
+const dedicatedQueryDimensionOptions = computed(() => {
+  if (!activeDedicatedQueryMeta.value) return [];
+  const metric = activeQueryMetric.value;
+  const baseDimensions = metric?.theme === "area-query"
+    ? ["市州", "区县"]
+    : ["景区"];
+  return [...new Set([...baseDimensions, ...(metric?.dimensions ?? []), ...activeDedicatedQueryMeta.value.quickDimensions])];
+});
 const queryGranularityOptions = computed(() => {
   const metric = activeQueryMetric.value;
   if (!metric || metric.mode === "resource") return ["当前"];
   const metricOptions = new Set([...(metric.granularityOptions ?? ["日", "月"]), "年"]);
+  if (appState.queryTimePreset === "holiday-2026") {
+    return metricOptions.has("节假日") ? ["节假日"] : [...metricOptions];
+  }
   const periodOptions = appState.queryTimePreset === "year-2026"
-    ? ["月", "年"]
+    ? ["月", "季度", "半年", "年"]
     : appState.queryTimePreset === "month-2026-07"
-      ? ["日", "月"]
-      : ["日"];
+      ? ["小时", "日", "周", "月"]
+      : ["日", "周"];
   const options = periodOptions.filter((item) => metricOptions.has(item));
   return options.length ? options : [...metricOptions];
 });
 const queryDimensionOptions = computed(() => {
   const metric = activeQueryMetric.value;
   if (!metric) return ["市州"];
+  if (metric.theme === "area-query") {
+    return ["市州", "区县", "区域层级", ...(metric.dimensions ?? []).filter((item) => item !== "市州" && item !== "区县" && item !== "区域层级")];
+  }
+  if (metric.theme === "scenic-query") {
+    return ["景区", ...(metric.dimensions ?? []).filter((item) => item !== "景区")];
+  }
   if (metric.theme === "resource") {
     return [...new Set([...queryResourceBaseDimensions, ...(metric.dimensions ?? [])])];
   }
@@ -4712,6 +4872,12 @@ function selectQueryResultView(viewId) {
 }
 
 function selectQueryModule(moduleId) {
+  const dedicatedMeta = queryDedicatedModuleMeta[moduleId];
+  if (dedicatedMeta) {
+    applyQueryConfigToDraft(dedicatedMeta.defaultConfig);
+    appState.queryResultView = "trend";
+    executeQuery(`已进入${dedicatedMeta.eyebrow}，并按默认条件完成查询。`);
+  }
   appState.queryModule = moduleId;
   appState.view = "query";
 }
@@ -4943,9 +5109,14 @@ function buildTimeMetricQueryResult(metric, queryConfig) {
 }
 
 function queryPeriodColumnLabel(granularity) {
+  if (granularity === "小时") return "小时";
   if (granularity === "日") return "日期";
+  if (granularity === "周") return "周次";
   if (granularity === "月") return "月份";
+  if (granularity === "季度") return "季度";
+  if (granularity === "半年") return "半年";
   if (granularity === "年") return "年份";
+  if (granularity === "节假日") return "节假日";
   return "时间";
 }
 
@@ -5018,10 +5189,36 @@ function buildMetricMonthlyBase(metric) {
 
 function buildTimeBucketPoints(metric, queryConfig, totalFactor) {
   const monthlyBase = buildMetricMonthlyBase(metric);
+  const monthIndex = queryConfig.timePreset === "recent-7" ? 6 : queryConfig.timePreset === "month-2026-07" ? 6 : 6;
+  const monthValue = (monthlyBase[monthIndex] ?? monthlyBase[0] ?? 0) * totalFactor;
 
   if (queryConfig.granularity === "年") {
     const value = monthlyBase.reduce((sum, item) => sum + item, 0) * totalFactor;
     return [{ label: "2026年", value, displayValue: formatQueryValue(value, metric.unit) }];
+  }
+
+  if (queryConfig.granularity === "半年") {
+    const buckets = [
+      { label: "上半年", indexes: [0, 1, 2, 3, 4, 5] },
+      { label: "下半年", indexes: [6, 7, 8, 9, 10, 11] },
+    ];
+    return buckets.map((bucket) => {
+      const value = bucket.indexes.reduce((sum, index) => sum + (monthlyBase[index] ?? 0), 0) * totalFactor;
+      return { label: bucket.label, value, displayValue: formatQueryValue(value, metric.unit) };
+    });
+  }
+
+  if (queryConfig.granularity === "季度") {
+    const buckets = [
+      { label: "一季度", indexes: [0, 1, 2] },
+      { label: "二季度", indexes: [3, 4, 5] },
+      { label: "三季度", indexes: [6, 7, 8] },
+      { label: "四季度", indexes: [9, 10, 11] },
+    ];
+    return buckets.map((bucket) => {
+      const value = bucket.indexes.reduce((sum, index) => sum + (monthlyBase[index] ?? 0), 0) * totalFactor;
+      return { label: bucket.label, value, displayValue: formatQueryValue(value, metric.unit) };
+    });
   }
 
   if (queryConfig.granularity === "月") {
@@ -5036,10 +5233,41 @@ function buildTimeBucketPoints(metric, queryConfig, totalFactor) {
     });
   }
 
-  const monthIndex = queryConfig.timePreset === "recent-7" ? 6 : queryConfig.timePreset === "month-2026-07" ? 6 : 6;
+  if (queryConfig.granularity === "周") {
+    const weekWeights = queryConfig.timePreset === "recent-7" ? [1] : [0.22, 0.24, 0.26, 0.28];
+    return weekWeights.map((weight, index) => {
+      const value = monthValue * weight;
+      return { label: queryConfig.timePreset === "recent-7" ? "近7日" : `第${index + 1}周`, value, displayValue: formatQueryValue(value, metric.unit) };
+    });
+  }
+
+  if (queryConfig.granularity === "小时") {
+    const hourlyWeights = Array.from({ length: 24 }, (_, index) => (index >= 8 && index <= 21 ? 0.76 + ((index + 3) % 6) * 0.08 : 0.18));
+    const hourlyTotal = hourlyWeights.reduce((sum, item) => sum + item, 0) || 1;
+    return hourlyWeights.map((weight, index) => {
+      const value = monthValue * (weight / hourlyTotal);
+      return { label: `${String(index).padStart(2, "0")}时`, value, displayValue: formatQueryValue(value, metric.unit) };
+    });
+  }
+
+  if (queryConfig.granularity === "节假日" || queryConfig.timePreset === "holiday-2026") {
+    const holidayBuckets = [
+      { label: "春节", weight: 0.28 },
+      { label: "清明", weight: 0.08 },
+      { label: "五一", weight: 0.18 },
+      { label: "端午", weight: 0.1 },
+      { label: "暑期", weight: 0.2 },
+      { label: "国庆", weight: 0.16 },
+    ];
+    const yearValue = monthlyBase.reduce((sum, item) => sum + item, 0) * totalFactor;
+    return holidayBuckets.map((item) => {
+      const value = yearValue * item.weight;
+      return { label: item.label, value, displayValue: formatQueryValue(value, metric.unit) };
+    });
+  }
+
   const dayCount = queryConfig.timePreset === "recent-7" ? 7 : 31;
   const dailyWeights = buildDailyWeights(dayCount);
-  const monthValue = (monthlyBase[monthIndex] ?? monthlyBase[0] ?? 0) * totalFactor;
   return dailyWeights.map((weight, index) => {
     const day = queryConfig.timePreset === "recent-7" ? index + 5 : index + 1;
     const value = monthValue * weight;
@@ -5098,7 +5326,8 @@ function resourceMatrixLabels(items, dimension) {
 }
 
 function buildTimeMetricTrendPoints(metric, queryConfig) {
-  const regionFactor = queryConfig.region === "全省" ? 1 : (queryCityWeightMap[queryConfig.region] ?? 0.12) * 1.08;
+  const scenicFactor = queryScenicWeightMap[queryConfig.region];
+  const regionFactor = queryConfig.region === "全省" ? 1 : scenicFactor ? scenicFactor : (queryCityWeightMap[queryConfig.region] ?? 0.12) * 1.08;
   const sourceFactor = querySourceFactorMap[queryConfig.source === "全部" ? metric.sources[0] : queryConfig.source] ?? 1;
   const resourceFactor = queryResourceTypeFactorMap[queryConfig.resourceCategory] ?? 1;
   const levelFactor = queryConfig.levelFilter === "全部" ? 1 : /5A|4A/.test(queryConfig.levelFilter) ? 0.38 : 0.66;
@@ -5134,7 +5363,8 @@ function buildTimeMetricDistributionRows(metric, trendPoints, queryConfig) {
 
 function buildDimensionValueRows(metric, total, queryConfig) {
   if (queryConfig.dimension === "市州") {
-    const cities = queryConfig.region === "全省" ? queryCityOptions : [queryConfig.region];
+    const scopedResource = resources.find((item) => item.name === queryConfig.region || item.county === queryConfig.region);
+    const cities = queryConfig.region === "全省" ? queryCityOptions : [scopedResource?.city ?? queryConfig.region];
     return cities
       .map((city) => ({
         label: city,
@@ -5146,7 +5376,7 @@ function buildDimensionValueRows(metric, total, queryConfig) {
   if (queryConfig.dimension === "区县") {
     const countyResources = queryConfig.region === "全省"
       ? resources
-      : resources.filter((item) => item.city === queryConfig.region);
+      : resources.filter((item) => item.city === queryConfig.region || item.county === queryConfig.region);
     const countyCounts = new Map();
     countyResources.forEach((item) => countyCounts.set(item.county, (countyCounts.get(item.county) ?? 0) + 1));
     const denominator = [...countyCounts.values()].reduce((sum, value) => sum + value, 0) || 1;
@@ -5157,7 +5387,11 @@ function buildDimensionValueRows(metric, total, queryConfig) {
   }
 
   if (queryConfig.dimension === "景区") {
-    const scenicResources = resources.filter((item) => item.category === "景区" && (queryConfig.region === "全省" || item.city === queryConfig.region));
+    const scenicResources = resources.filter((item) => {
+      if (item.category !== "景区") return false;
+      if (queryConfig.region === "全省") return true;
+      return item.city === queryConfig.region || item.name === queryConfig.region;
+    });
     const denominator = scenicResources.length || 1;
     return scenicResources.slice(0, 12).map((item, index) => ({
       label: item.name,
@@ -5169,6 +5403,102 @@ function buildDimensionValueRows(metric, total, queryConfig) {
     const sources = metric.sources;
     const sourceTotal = sources.reduce((sum, source) => sum + (querySourceFactorMap[source] ?? 1), 0) || 1;
     return sources.map((source) => ({ label: source, value: total * ((querySourceFactorMap[source] ?? 1) / sourceTotal) }));
+  }
+
+  if (queryConfig.dimension === "区域层级") {
+    return [
+      { label: "省", value: total * 0.45 },
+      { label: "市州", value: total * 0.34 },
+      { label: "区县", value: total * 0.21 },
+    ];
+  }
+
+  if (queryConfig.dimension === "性别") {
+    return [
+      { label: "男", value: total * 0.52 },
+      { label: "女", value: total * 0.48 },
+    ];
+  }
+
+  if (queryConfig.dimension === "年龄") {
+    return [
+      { label: "18-24岁", value: total * 0.18 },
+      { label: "25-34岁", value: total * 0.31 },
+      { label: "35-44岁", value: total * 0.24 },
+      { label: "45-59岁", value: total * 0.19 },
+      { label: "60岁以上", value: total * 0.08 },
+    ];
+  }
+
+  if (queryConfig.dimension === "出行方式") {
+    return [
+      { label: "自驾", value: total * 0.42 },
+      { label: "高铁", value: total * 0.22 },
+      { label: "航空", value: total * 0.14 },
+      { label: "团队大巴", value: total * 0.12 },
+      { label: "公共交通", value: total * 0.1 },
+    ];
+  }
+
+  if (queryConfig.dimension === "游客停留时长") {
+    return [
+      { label: "2小时内", value: total * 0.16 },
+      { label: "半日", value: total * 0.28 },
+      { label: "1日", value: total * 0.34 },
+      { label: "2日及以上", value: total * 0.22 },
+    ];
+  }
+
+  if (queryConfig.dimension === "游客来源地") {
+    return [
+      { label: "省内", value: total * 0.36 },
+      { label: "周边省份", value: total * 0.24 },
+      { label: "长三角", value: total * 0.16 },
+      { label: "珠三角", value: total * 0.11 },
+      { label: "京津冀", value: total * 0.07 },
+      { label: "其他", value: total * 0.06 },
+    ];
+  }
+
+  if (queryConfig.dimension === "旅游半径") {
+    return [
+      { label: "50公里内", value: total * 0.24 },
+      { label: "50-150公里", value: total * 0.29 },
+      { label: "150-500公里", value: total * 0.27 },
+      { label: "500公里以上", value: total * 0.2 },
+    ];
+  }
+
+  if (queryConfig.dimension === "夜游情况") {
+    return [
+      { label: "夜游", value: total * 0.38 },
+      { label: "非夜游", value: total * 0.62 },
+    ];
+  }
+
+  if (queryConfig.dimension === "平均旅游城市") {
+    return [
+      { label: "单城", value: total * 0.48 },
+      { label: "双城", value: total * 0.34 },
+      { label: "三城及以上", value: total * 0.18 },
+    ];
+  }
+
+  if (queryConfig.dimension === "接待类型") {
+    return [
+      { label: "总客流", value: total * 0.46 },
+      { label: "实时在园", value: total * 0.22 },
+      { label: "日累计接待", value: total * 0.32 },
+    ];
+  }
+
+  if (queryConfig.dimension === "预约渠道") {
+    return [
+      { label: "官方平台", value: total * 0.34 },
+      { label: "OTA", value: total * 0.28 },
+      { label: "现场扫码", value: total * 0.22 },
+      { label: "团队预约", value: total * 0.16 },
+    ];
   }
 
   if (queryConfig.dimension === "资源类型") {
@@ -5433,8 +5763,7 @@ function openDashboardLink(item) {
 
 function openSecondaryNav(id) {
   if (currentPrimaryNavId.value === "query") {
-    appState.view = "query";
-    appState.queryModule = id;
+    selectQueryModule(id);
     return;
   }
 
@@ -7691,7 +8020,7 @@ function badgeTone(status) {
             <span class="toolbar-label">三级菜单</span>
             <strong>{{ queryModules.find((item) => item.id === appState.queryModule)?.label }}</strong>
           </div>
-          <div v-if="appState.queryModule === 'query-explore'" class="toolbar-actions">
+          <div v-if="['query-explore', 'query-area', 'query-scenic'].includes(appState.queryModule)" class="toolbar-actions">
             <button class="secondary-button" @click="saveCurrentQuery">
               <Star :size="16" />
               保存查询
@@ -7807,88 +8136,172 @@ function badgeTone(status) {
           </div>
         </template>
 
-        <template v-else-if="appState.queryModule === 'query-explore'">
+        <template v-else-if="['query-explore', 'query-area', 'query-scenic'].includes(appState.queryModule)">
           <section class="surface query-filter-panel">
-            <div class="section-head query-panel-head">
-              <div>
-                <p class="eyebrow">查询条件</p>
-                <h3>多维查询配置</h3>
+            <template v-if="appState.queryModule === 'query-explore'">
+              <div class="section-head query-panel-head">
+                <div>
+                  <p class="eyebrow">查询条件</p>
+                  <h3>多维查询配置</h3>
+                </div>
+                <div class="query-panel-actions">
+                  <button class="secondary-button" @click="resetQueryFilters">重置条件</button>
+                  <button class="primary-button" @click="executeQuery()">
+                    <Search :size="16" />
+                    查询
+                  </button>
+                  <button class="secondary-button" @click="saveCurrentQuery">
+                    <Star :size="16" />
+                    保存为常用查询
+                  </button>
+                </div>
               </div>
-              <div class="query-panel-actions">
-                <button class="secondary-button" @click="resetQueryFilters">重置条件</button>
-                <button class="primary-button" @click="executeQuery()">
-                  <Search :size="16" />
-                  查询
-                </button>
-                <button class="secondary-button" @click="saveCurrentQuery">
-                  <Star :size="16" />
-                  保存为常用查询
-                </button>
+              <div class="query-form-grid query-form-grid-4">
+                <label class="query-field">
+                  <span>主题域</span>
+                  <select :value="appState.queryTheme" @change="selectQueryTheme($event.target.value)">
+                    <option v-for="item in queryThemeCatalog" :key="item.id" :value="item.id">{{ item.label }}</option>
+                  </select>
+                </label>
+                <label class="query-field">
+                  <span>关键指标</span>
+                  <select :value="appState.queryMetricId" @change="selectQueryMetric($event.target.value)">
+                    <option v-for="item in queryMetricOptions" :key="item.id" :value="item.id">{{ item.label }}</option>
+                  </select>
+                </label>
+                <label v-if="showQueryTimeFields" class="query-field">
+                  <span>统计周期</span>
+                  <select :value="appState.queryTimePreset" @change="selectQueryTimePreset($event.target.value)">
+                    <option v-for="item in queryTimePresetOptions" :key="item.id" :value="item.id">{{ item.label }}</option>
+                  </select>
+                </label>
+                <label v-if="showQueryTimeFields" class="query-field">
+                  <span>时间粒度</span>
+                  <select :value="appState.queryGranularity" @change="selectQueryGranularity($event.target.value)">
+                    <option v-for="item in queryGranularityOptions" :key="item" :value="item">{{ item }}</option>
+                  </select>
+                </label>
+                <label v-if="showQueryRegionField" class="query-field">
+                  <span>统计范围</span>
+                  <select v-model="appState.queryRegion">
+                    <option value="全省">全省</option>
+                    <option v-for="item in queryCityOptions" :key="item" :value="item">{{ item }}</option>
+                  </select>
+                </label>
+                <label class="query-field">
+                  <span>分析维度</span>
+                  <select v-model="appState.queryDimension">
+                    <option v-for="item in queryDimensionOptions" :key="item" :value="item">{{ item }}</option>
+                  </select>
+                </label>
+                <label v-if="showQuerySourceField" class="query-field">
+                  <span>数据来源</span>
+                  <select v-model="appState.querySource">
+                    <option v-for="item in querySourceOptions" :key="item" :value="item">{{ item }}</option>
+                  </select>
+                </label>
+                <label v-if="showQueryResourceFields" class="query-field">
+                  <span>资源类型</span>
+                  <select v-model="appState.queryResourceCategory">
+                    <option v-for="item in queryResourceCategoryOptions" :key="item" :value="item">{{ item }}</option>
+                  </select>
+                </label>
+                <label v-if="showQueryResourceFields" class="query-field">
+                  <span>等级筛选</span>
+                  <select v-model="appState.queryLevelFilter">
+                    <option v-for="item in queryLevelOptions" :key="item" :value="item">{{ item }}</option>
+                  </select>
+                </label>
+                <label v-if="showQueryResourceFields" class="query-field">
+                  <span>收费情况</span>
+                  <select v-model="appState.queryChargeFilter">
+                    <option v-for="item in queryChargeOptions" :key="item" :value="item">{{ item }}</option>
+                  </select>
+                </label>
               </div>
-            </div>
-            <div class="query-form-grid query-form-grid-4">
-              <label class="query-field">
-                <span>主题域</span>
-                <select :value="appState.queryTheme" @change="selectQueryTheme($event.target.value)">
-                  <option v-for="item in queryThemeCatalog" :key="item.id" :value="item.id">{{ item.label }}</option>
-                </select>
-              </label>
-              <label class="query-field">
-                <span>关键指标</span>
-                <select :value="appState.queryMetricId" @change="selectQueryMetric($event.target.value)">
-                  <option v-for="item in queryMetricOptions" :key="item.id" :value="item.id">{{ item.label }}</option>
-                </select>
-              </label>
-              <label v-if="showQueryTimeFields" class="query-field">
-                <span>统计周期</span>
-                <select :value="appState.queryTimePreset" @change="selectQueryTimePreset($event.target.value)">
-                  <option v-for="item in queryTimePresetOptions" :key="item.id" :value="item.id">{{ item.label }}</option>
-                </select>
-              </label>
-              <label v-if="showQueryTimeFields" class="query-field">
-                <span>时间粒度</span>
-                <select :value="appState.queryGranularity" @change="selectQueryGranularity($event.target.value)">
-                  <option v-for="item in queryGranularityOptions" :key="item" :value="item">{{ item }}</option>
-                </select>
-              </label>
-              <label v-if="showQueryRegionField" class="query-field">
-                <span>统计范围</span>
-                <select v-model="appState.queryRegion">
-                  <option value="全省">全省</option>
-                  <option v-for="item in queryCityOptions" :key="item" :value="item">{{ item }}</option>
-                </select>
-              </label>
-              <label class="query-field">
-                <span>分析维度</span>
-                <select v-model="appState.queryDimension">
-                  <option v-for="item in queryDimensionOptions" :key="item" :value="item">{{ item }}</option>
-                </select>
-              </label>
-              <label v-if="showQuerySourceField" class="query-field">
-                <span>数据来源</span>
-                <select v-model="appState.querySource">
-                  <option v-for="item in querySourceOptions" :key="item" :value="item">{{ item }}</option>
-                </select>
-              </label>
-              <label v-if="showQueryResourceFields" class="query-field">
-                <span>资源类型</span>
-                <select v-model="appState.queryResourceCategory">
-                  <option v-for="item in queryResourceCategoryOptions" :key="item" :value="item">{{ item }}</option>
-                </select>
-              </label>
-              <label v-if="showQueryResourceFields" class="query-field">
-                <span>等级筛选</span>
-                <select v-model="appState.queryLevelFilter">
-                  <option v-for="item in queryLevelOptions" :key="item" :value="item">{{ item }}</option>
-                </select>
-              </label>
-              <label v-if="showQueryResourceFields" class="query-field">
-                <span>收费情况</span>
-                <select v-model="appState.queryChargeFilter">
-                  <option v-for="item in queryChargeOptions" :key="item" :value="item">{{ item }}</option>
-                </select>
-              </label>
-            </div>
+            </template>
+
+            <template v-else>
+              <div class="section-head query-panel-head">
+                <div>
+                  <p class="eyebrow">{{ activeDedicatedQueryMeta.eyebrow }}</p>
+                  <h3>{{ activeDedicatedQueryMeta.title }}</h3>
+                </div>
+                <div class="query-panel-actions">
+                  <button class="secondary-button" @click="applyQueryConfigToDraft(activeDedicatedQueryMeta.defaultConfig); executeQuery('已恢复当前模块默认查询条件。')">重置条件</button>
+                  <button class="primary-button" @click="executeQuery()">
+                    <Search :size="16" />
+                    查询
+                  </button>
+                  <button class="secondary-button" @click="exportCurrentQuery">
+                    <Download :size="16" />
+                    导出结果
+                  </button>
+                  <button class="secondary-button" @click="saveCurrentQuery">
+                    <Star :size="16" />
+                    保存查询
+                  </button>
+                </div>
+              </div>
+              <div class="query-dedicated-layout">
+                <div class="query-form-grid query-form-grid-4">
+                  <label class="query-field">
+                    <span>查询类型</span>
+                    <select :value="appState.queryMetricId" @change="selectQueryMetric($event.target.value)">
+                      <option v-for="item in dedicatedQueryMetricOptions" :key="item.id" :value="item.id">{{ item.label }}</option>
+                    </select>
+                  </label>
+                  <label class="query-field">
+                    <span>统计周期</span>
+                    <select :value="appState.queryTimePreset" @change="selectQueryTimePreset($event.target.value)">
+                      <option v-for="item in queryTimePresetOptions" :key="item.id" :value="item.id">{{ item.label }}</option>
+                    </select>
+                  </label>
+                  <label class="query-field">
+                    <span>时间粒度</span>
+                    <select :value="appState.queryGranularity" @change="selectQueryGranularity($event.target.value)">
+                      <option v-for="item in queryGranularityOptions" :key="item" :value="item">{{ item }}</option>
+                    </select>
+                  </label>
+                  <label class="query-field">
+                    <span>{{ activeDedicatedQueryMeta.scopeLabel }}</span>
+                    <select v-model="appState.queryRegion">
+                      <option v-for="item in activeDedicatedQueryMeta.scopeOptions" :key="item" :value="item">{{ item }}</option>
+                    </select>
+                  </label>
+                  <label v-if="appState.queryModule === 'query-area'" class="query-field">
+                    <span>统计层级</span>
+                    <select v-model="appState.queryDimension">
+                      <option v-for="item in queryAreaLevelOptions" :key="item" :value="item === '省' ? '区域层级' : item">{{ item }}</option>
+                    </select>
+                  </label>
+                  <label class="query-field">
+                    <span>分析维度</span>
+                    <select v-model="appState.queryDimension">
+                      <option v-for="item in dedicatedQueryDimensionOptions" :key="item" :value="item">{{ item }}</option>
+                    </select>
+                  </label>
+                  <label class="query-field">
+                    <span>数据来源</span>
+                    <select v-model="appState.querySource">
+                      <option v-for="item in querySourceOptions" :key="item" :value="item">{{ item }}</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="query-support-grid">
+                  <article v-for="item in dedicatedQueryMetricOptions" :key="`support-${item.id}`" class="query-support-card" :class="{ active: appState.queryMetricId === item.id }">
+                    <div class="query-metric-card-top">
+                      <strong>{{ item.label }}</strong>
+                      <span class="pill">{{ item.unit }}</span>
+                    </div>
+                    <p>{{ item.definition }}</p>
+                    <div class="query-theme-tags">
+                      <span v-for="dimension in item.dimensions.slice(0, 5)" :key="`${item.id}-${dimension}`" class="pill">{{ dimension }}</span>
+                    </div>
+                  </article>
+                </div>
+              </div>
+            </template>
           </section>
 
           <div class="stats-grid">
