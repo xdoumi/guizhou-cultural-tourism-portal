@@ -4116,6 +4116,46 @@ const querySavedCurrentItem = computed(() => savedQueryItems.find((item) => item
 const currentQueryResult = computed(() => buildQueryResult(executedQueryMetric.value, appState.queryExecuted));
 const currentQuerySummaryCards = computed(() => currentQueryResult.value.summaryCards ?? []);
 const currentQueryTrendPoints = computed(() => currentQueryResult.value.trendPoints ?? []);
+const currentQueryTrendChart = computed(() => {
+  const points = currentQueryTrendPoints.value;
+  const width = 1000;
+  const height = 320;
+  const paddingX = 42;
+  const paddingTop = 34;
+  const paddingBottom = 60;
+  const innerWidth = width - paddingX * 2;
+  const innerHeight = height - paddingTop - paddingBottom;
+  const maxValue = Math.max(...points.map((point) => point.value), 1);
+  const stepX = points.length > 1 ? innerWidth / (points.length - 1) : 0;
+  const labelStep = points.length > 18 ? 3 : points.length > 12 ? 2 : 1;
+  const chartPoints = points.map((point, index) => {
+    const x = paddingX + stepX * index;
+    const y = paddingTop + (1 - point.value / maxValue) * innerHeight;
+    return {
+      ...point,
+      x,
+      y,
+      showLabel: index % labelStep === 0 || index === points.length - 1,
+    };
+  });
+  const linePath = chartPoints.map((point, index) => `${index === 0 ? "M" : "L"} ${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join(" ");
+  const areaPath = chartPoints.length
+    ? `${linePath} L ${chartPoints.at(-1).x.toFixed(1)} ${height - paddingBottom} L ${chartPoints[0].x.toFixed(1)} ${height - paddingBottom} Z`
+    : "";
+  return {
+    width,
+    height,
+    paddingBottom,
+    chartBottom: height - paddingBottom,
+    chartPoints,
+    linePath,
+    areaPath,
+    gridLines: [0, 25, 50, 75, 100].map((ratio) => ({
+      ratio,
+      y: paddingTop + (ratio / 100) * innerHeight,
+    })),
+  };
+});
 const currentQueryDistributionRows = computed(() => currentQueryResult.value.distributionRows ?? []);
 const currentQueryMatrix = computed(() => currentQueryResult.value.matrix ?? { columns: [], rows: [], rowHeader: "维度", columnHeader: "统计项" });
 const currentQueryMatrixCaption = computed(() => {
@@ -8374,23 +8414,64 @@ function badgeTone(status) {
               </div>
 
               <div v-if="appState.queryResultView === 'trend'" class="query-result-block">
-                <div class="bar-chart query-trend-chart">
-                  <article
-                    v-for="item in currentQueryTrendPoints"
-                    :key="item.label"
-                    class="bar-item"
-                    @mousemove="showAnalysisTooltip($event, item.label, `${executedQueryMetric.label}：${item.displayValue}`)"
-                    @mouseleave="hideAnalysisTooltip"
+                <div class="query-line-chart">
+                  <svg
+                    class="query-line-chart-svg"
+                    :viewBox="`0 0 ${currentQueryTrendChart.width} ${currentQueryTrendChart.height}`"
+                    role="img"
+                    :aria-label="`${executedQueryMetric.label}趋势折线图`"
+                    preserveAspectRatio="none"
                   >
-                    <div class="bar-track">
-                      <div
-                        class="bar-fill access"
-                        :style="{ height: `${(item.value / Math.max(...currentQueryTrendPoints.map((point) => point.value), 1)) * 100}%` }"
-                      ></div>
-                    </div>
-                    <strong>{{ item.displayValue }}</strong>
-                    <span>{{ item.label }}</span>
-                  </article>
+                    <defs>
+                      <linearGradient id="queryTrendAreaFill" x1="0" x2="0" y1="0" y2="1">
+                        <stop offset="0%" stop-color="#11785f" stop-opacity="0.24" />
+                        <stop offset="100%" stop-color="#11785f" stop-opacity="0.02" />
+                      </linearGradient>
+                    </defs>
+                    <g v-for="line in currentQueryTrendChart.gridLines" :key="`grid-${line.ratio}`" class="query-line-grid">
+                      <line x1="42" :x2="currentQueryTrendChart.width - 42" :y1="line.y" :y2="line.y"></line>
+                    </g>
+                    <path
+                      v-if="currentQueryTrendChart.areaPath"
+                      class="query-line-area"
+                      :d="currentQueryTrendChart.areaPath"
+                      fill="url(#queryTrendAreaFill)"
+                    ></path>
+                    <path
+                      v-if="currentQueryTrendChart.linePath"
+                      class="query-line-path"
+                      :d="currentQueryTrendChart.linePath"
+                      fill="none"
+                    ></path>
+                    <g v-for="point in currentQueryTrendChart.chartPoints" :key="point.label">
+                      <circle
+                        class="query-line-point"
+                        :cx="point.x"
+                        :cy="point.y"
+                        r="5"
+                        @mousemove="showAnalysisTooltip($event, point.label, `${executedQueryMetric.label}：${point.displayValue}`)"
+                        @mouseleave="hideAnalysisTooltip"
+                      ></circle>
+                      <text
+                        v-if="point.showLabel"
+                        class="query-line-value"
+                        :x="point.x"
+                        :y="Math.max(point.y - 12, 18)"
+                        text-anchor="middle"
+                      >
+                        {{ point.displayValue }}
+                      </text>
+                      <text
+                        v-if="point.showLabel"
+                        class="query-line-axis-label"
+                        :x="point.x"
+                        :y="currentQueryTrendChart.chartBottom + 22"
+                        text-anchor="middle"
+                      >
+                        {{ point.label }}
+                      </text>
+                    </g>
+                  </svg>
                 </div>
               </div>
 
