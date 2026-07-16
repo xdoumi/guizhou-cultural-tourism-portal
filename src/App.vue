@@ -3099,8 +3099,6 @@ const analysisModules = [
 
 const queryModules = [
   { id: "query-overview", label: "关键指标" },
-  { id: "query-area", label: "区域数据查询" },
-  { id: "query-scenic", label: "景区数据查询" },
   { id: "query-explore", label: "多维查询" },
   { id: "query-reports", label: "专题报表" },
   { id: "query-favorites", label: "我的查询" },
@@ -4048,6 +4046,9 @@ const showQueryRegionField = computed(() => activeQueryMetric.value?.theme !== "
 const showQueryResourceFields = computed(() => activeQueryMetric.value?.theme === "resource");
 const showQuerySourceField = computed(() => (activeQueryMetric.value?.sources?.length ?? 0) > 1);
 const activeDedicatedQueryMeta = computed(() => queryDedicatedModuleMeta[appState.queryModule]);
+const currentQueryModuleLabel = computed(
+  () => queryModules.find((item) => item.id === appState.queryModule)?.label ?? activeDedicatedQueryMeta.value?.eyebrow ?? "查询中心",
+);
 const dedicatedQueryMetricOptions = computed(() =>
   activeDedicatedQueryMeta.value
     ? queryMetricCatalog.filter((item) => item.theme === activeDedicatedQueryMeta.value.theme)
@@ -8047,7 +8048,7 @@ function badgeTone(status) {
         <div class="section-toolbar">
           <div class="toolbar-context">
             <span class="toolbar-label">三级菜单</span>
-            <strong>{{ queryModules.find((item) => item.id === appState.queryModule)?.label }}</strong>
+            <strong>{{ currentQueryModuleLabel }}</strong>
           </div>
           <div v-if="['query-explore', 'query-area', 'query-scenic'].includes(appState.queryModule)" class="toolbar-actions">
             <button class="secondary-button" @click="saveCurrentQuery">
