@@ -2275,6 +2275,32 @@ const queryReportTemplates = [
     summary: "查看 2026 年累计客流变化趋势、峰值月份和地州对比。",
   },
   {
+    id: "report-area-query",
+    title: "区域数据查询报表",
+    theme: "area-query",
+    metricId: "area_flow",
+    granularity: "日",
+    timePreset: "month-2026-07",
+    region: "全省",
+    dimension: "市州",
+    source: "综合口径",
+    queryModule: "query-area",
+    summary: "点击后直接进入区域数据查询详情页，查看区域客流和游客画像。",
+  },
+  {
+    id: "report-scenic-query",
+    title: "景区数据查询报表",
+    theme: "scenic-query",
+    metricId: "scenic_reception",
+    granularity: "日",
+    timePreset: "month-2026-07",
+    region: "黄果树旅游区",
+    dimension: "景区",
+    source: "综合口径",
+    queryModule: "query-scenic",
+    summary: "点击后直接进入景区数据查询详情页，查看游客接待、画像和预约。",
+  },
+  {
     id: "report-5",
     title: "门票收入渠道对比",
     theme: "operation",
@@ -4871,12 +4897,16 @@ function selectQueryResultView(viewId) {
   appState.queryResultView = viewId;
 }
 
-function selectQueryModule(moduleId) {
+function selectQueryModule(moduleId, queryConfig) {
   const dedicatedMeta = queryDedicatedModuleMeta[moduleId];
   if (dedicatedMeta) {
-    applyQueryConfigToDraft(dedicatedMeta.defaultConfig);
+    applyQueryConfigToDraft(queryConfig ?? dedicatedMeta.defaultConfig);
     appState.queryResultView = "trend";
-    executeQuery(`已进入${dedicatedMeta.eyebrow}，并按默认条件完成查询。`);
+    executeQuery(queryConfig ? `已进入${dedicatedMeta.eyebrow}详情页，并完成专题查询。` : `已进入${dedicatedMeta.eyebrow}，并按默认条件完成查询。`);
+  } else if (queryConfig) {
+    applyQueryConfigToDraft(queryConfig);
+    appState.queryResultView = "trend";
+    executeQuery("已按专题报表条件完成查询。");
   }
   appState.queryModule = moduleId;
   appState.view = "query";
@@ -4891,7 +4921,7 @@ function resetQueryFilters() {
 function applyQueryReportTemplate(templateId) {
   const template = queryReportTemplates.find((item) => item.id === templateId);
   if (!template) return;
-  applyQueryConfigToDraft({
+  const templateConfig = {
     theme: template.theme,
     metricId: template.metricId,
     timePreset: template.timePreset,
@@ -4899,9 +4929,8 @@ function applyQueryReportTemplate(templateId) {
     region: template.region,
     dimension: template.dimension,
     source: template.source,
-  });
-  appState.queryModule = "query-explore";
-  appState.view = "query";
+  };
+  selectQueryModule(template.queryModule ?? "query-explore", templateConfig);
   executeQuery(`已载入专题报表“${template.title}”并完成查询。`);
 }
 
@@ -8509,9 +8538,10 @@ function badgeTone(status) {
                   <span class="pill">时间：{{ item.timePreset === 'month-2026-07' ? '2026年7月' : item.timePreset === 'year-2026' ? '2026年' : '近7日' }}</span>
                   <span class="pill">范围：{{ item.region }}</span>
                   <span class="pill">维度：{{ item.dimension }}</span>
+                  <span v-if="item.queryModule" class="pill">入口：{{ item.queryModule === 'query-area' ? '区域查询详情' : '景区查询详情' }}</span>
                 </div>
                 <div class="toolbar-actions query-report-actions">
-                  <button class="action-link" @click="applyQueryReportTemplate(item.id)">载入模板</button>
+                  <button class="action-link" @click="applyQueryReportTemplate(item.id)">{{ item.queryModule ? '进入查询详情' : '载入模板' }}</button>
                 </div>
               </article>
             </div>
